@@ -52,61 +52,61 @@ class AdminPaymentScreen extends ConsumerWidget {
             ],
           ),
         ),
-        // Expanded(
-        //   child: paymentsAsync.when(
-        //     loading: () => const SSLoading(type: SSLoadingType.table),
-        //     error: (e, _) => SSErrorState(
-        //       message: e.toString(),
-        //       onRetry: () => ref.invalidate(paymentsProvider),
-        //     ),
-        //     data: (payments) {
-        //       if (payments.isEmpty) {
-        //         return const SSEmptyState(
-        //           icon: Icons.payment_outlined,
-        //           title: 'No Payments',
-        //           description: 'No payments have been recorded yet.',
-        //         );
-        //       }
+        Expanded(
+          child: paymentsAsync.when(
+            loading: () => const SSLoading(type: SSLoadingType.table),
+            error: (e, _) => SSErrorState(
+              message: e.toString(),
+              onRetry: () => ref.invalidate(paymentsProvider),
+            ),
+            data: (payments) {
+              if (payments.isEmpty) {
+                return const SSEmptyState(
+                  icon: Icons.payment_outlined,
+                  title: 'No Payments',
+                  description: 'No payments have been recorded yet.',
+                );
+              }
 
-        //       // ── Summary ──
-        //       final totalAmount =
-        //           payments.fold<double>(0, (s, p) => s + p.amount);
+              // ── Summary ──
+              final totalAmount =
+                  payments.fold<double>(0, (s, p) => s + p.amount);
 
-        //       return Column(
-        //         children: [
-        //           // Summary bar
-        //           Container(
-        //             margin: const EdgeInsets.symmetric(
-        //                 horizontal: AppSpacing.lg),
-        //             padding: const EdgeInsets.all(AppSpacing.md),
-        //             decoration: BoxDecoration(
-        //               color: AppColors.success.withValues(alpha: 0.08),
-        //               borderRadius:
-        //                   BorderRadius.circular(AppSpacing.radiusMd),
-        //               border: Border.all(
-        //                   color: AppColors.success.withValues(alpha: 0.2)),
-        //             ),
-        //             child: Row(
-        //               children: [
-        //                 const Icon(Icons.account_balance_wallet,
-        //                     color: AppColors.success),
-        //                 const SizedBox(width: AppSpacing.sm),
-        //                 Text('Total Collected: ',
-        //                     style: AppTypography.bodyMedium),
-        //                 Text(
-        //                   '\$${totalAmount.toStringAsFixed(2)}',
-        //                   style: AppTypography.titleMedium
-        //                       .copyWith(color: AppColors.success),
-        //                 ),
-        //                 const Spacer(),
-        //                 Text(
-        //                   '${payments.length} transaction(s)',
-        //                   style: AppTypography.bodySmall,
-        //                 ),
-        //               ],
-        //             ),
-        //           ),
-        //           const SizedBox(height: AppSpacing.md),
+              return Column(
+                children: [
+                  // Summary bar
+                  Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withValues(alpha: 0.08),
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.radiusMd),
+                      border: Border.all(
+                          color: AppColors.success.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.account_balance_wallet,
+                            color: AppColors.success),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text('Total Collected: ',
+                            style: AppTypography.bodyMedium),
+                        Text(
+                          '\$${totalAmount.toStringAsFixed(2)}',
+                          style: AppTypography.titleMedium
+                              .copyWith(color: AppColors.success),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${payments.length} transaction(s)',
+                          style: AppTypography.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
 
                   // Table
                   Expanded(
