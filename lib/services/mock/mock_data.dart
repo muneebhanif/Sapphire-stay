@@ -6,6 +6,8 @@ import '../../models/invoice.dart';
 import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../models/user.dart';
+import '../../models/booking_request.dart';
+import '../../models/payment_proof.dart';
 
 /// Centralized mock data for development.
 ///
@@ -338,6 +340,42 @@ abstract final class MockData {
       status: PaymentStatus.completed,
       paidAt: DateTime(2026, 2, 9),
       transactionRef: 'TXN-2026-001',
+    ),
+  ];
+
+  // ─── Booking Requests (PKR payment flow) ───────────────────────
+  static final List<BookingRequest> bookingRequests = [
+    BookingRequest(
+      id: 'br-001',
+      customerName: 'David Kim',
+      customerEmail: 'david@email.com',
+      customerPhone: '+1 (555) 200-0003',
+      roomId: 'room-001',
+      roomNumber: '101',
+      checkIn: DateTime(2026, 2, 15),
+      checkOut: DateTime(2026, 2, 17),
+      guestsCount: 1,
+      requestedTotalPkr: 67200,
+      status: BookingRequestStatus.paymentSubmitted,
+      notes: 'Need quiet room near elevator.',
+      createdAt: DateTime(2026, 2, 8),
+    ),
+  ];
+
+  // ─── Payment Proofs (Easypaisa screenshots) ────────────────────
+  static final List<PaymentProof> paymentProofs = [
+    PaymentProof(
+      id: 'proof-001',
+      bookingRequestId: 'br-001',
+      customerName: 'David Kim',
+      senderNumber: '03001234567',
+      transactionId: 'EPX-77889911',
+      amountPkr: 67200,
+      screenshotUrl:
+          'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=1200&q=80',
+      message: 'Paid via Easypaisa, please confirm booking.',
+      status: PaymentProofStatus.pending,
+      createdAt: DateTime(2026, 2, 8, 14, 30),
     ),
   ];
 

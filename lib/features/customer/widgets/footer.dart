@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -7,14 +8,21 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../providers/providers.dart';
 
 /// Consistent footer for all customer-facing pages.
-class CustomerFooter extends StatelessWidget {
+/// Contact info and branding now come from the database.
+class CustomerFooter extends ConsumerWidget {
   const CustomerFooter({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isDesktop(context);
+    final configAsync = ref.watch(siteConfigProvider);
+
+    final copyright = configAsync.whenOrNull(
+      data: (c) => c['copyright'],
+    ) ?? AppConstants.copyright;
 
     return Container(
       color: AppColors.primary,
@@ -25,14 +33,14 @@ class CustomerFooter extends StatelessWidget {
       child: Column(
         children: [
           isDesktop
-              ? _buildDesktopLayout(context)
-              : _buildMobileLayout(context),
+              ? _buildDesktopLayout(context, ref)
+              : _buildMobileLayout(context, ref),
           const SizedBox(height: AppSpacing.xl),
           const Divider(color: AppColors.primaryLight),
           const SizedBox(height: AppSpacing.lg),
           // ── Copyright ──
           Text(
-            AppConstants.copyright,
+            copyright,
             style: AppTypography.bodySmall.copyWith(
               color: AppColors.textTertiary,
             ),
@@ -43,12 +51,12 @@ class CustomerFooter extends StatelessWidget {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context) {
+  Widget _buildDesktopLayout(BuildContext context, WidgetRef ref) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Brand ──
-        Expanded(flex: 2, child: _buildBrandSection()),
+        Expanded(flex: 2, child: _buildBrandSection(ref)),
         const SizedBox(width: AppSpacing.xxl),
 
         // ── Quick Links ──
@@ -56,7 +64,7 @@ class CustomerFooter extends StatelessWidget {
         const SizedBox(width: AppSpacing.xxl),
 
         // ── Contact ──
-        Expanded(child: _buildContactSection()),
+        Expanded(child: _buildContactSection(ref)),
         const SizedBox(width: AppSpacing.xxl),
 
         // ── Newsletter ──
@@ -65,22 +73,27 @@ class CustomerFooter extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context) {
+  Widget _buildMobileLayout(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildBrandSection(),
+        _buildBrandSection(ref),
         const SizedBox(height: AppSpacing.xl),
         _buildQuickLinks(context),
         const SizedBox(height: AppSpacing.xl),
-        _buildContactSection(),
+        _buildContactSection(ref),
         const SizedBox(height: AppSpacing.xl),
         _buildNewsletterSection(),
       ],
     );
   }
 
-  Widget _buildBrandSection() {
+  Widget _buildBrandSection(WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+    final hotelName = configAsync.whenOrNull(
+      data: (c) => c['hotel_name'],
+    ) ?? AppConstants.hotelName;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -93,7 +106,7 @@ class CustomerFooter extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          AppConstants.hotelName,
+          hotelName,
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.textTertiary,
           ),
@@ -146,7 +159,12 @@ class CustomerFooter extends StatelessWidget {
     );
   }
 
-  Widget _buildContactSection() {
+  Widget _buildContactSection(WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+    final phone = configAsync.whenOrNull(data: (c) => c['phone']) ?? AppConstants.phone;
+    final email = configAsync.whenOrNull(data: (c) => c['email']) ?? AppConstants.email;
+    final address = configAsync.whenOrNull(data: (c) => c['address']) ?? AppConstants.address;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -155,11 +173,11 @@ class CustomerFooter extends StatelessWidget {
           style: AppTypography.titleSmall.copyWith(color: AppColors.white),
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildContactItem(Icons.phone_outlined, AppConstants.phone),
+        _buildContactItem(Icons.phone_outlined, phone),
         const SizedBox(height: AppSpacing.xs),
-        _buildContactItem(Icons.email_outlined, AppConstants.email),
+        _buildContactItem(Icons.email_outlined, email),
         const SizedBox(height: AppSpacing.xs),
-        _buildContactItem(Icons.location_on_outlined, AppConstants.address),
+        _buildContactItem(Icons.location_on_outlined, address),
       ],
     );
   }

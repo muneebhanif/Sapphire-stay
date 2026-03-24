@@ -55,4 +55,7 @@ abstract final class AppConstants {
   static const Duration animFast = Duration(milliseconds: 200);
   static const Duration animNormal = Duration(milliseconds: 350);
   static const Duration animSlow = Duration(milliseconds: 500);
+
+    // ─── Currency ───────────────────────────────────────────────────
+    static const double usdToPkrRate = 278.0;
 }

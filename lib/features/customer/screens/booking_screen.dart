@@ -1,14 +1,21 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/routing/app_router.dart';
+import '../../../core/config/payment_env.dart';
+import '../../../core/services/convex_storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_text_field.dart';
+import '../../../models/booking_request.dart';
+import '../../../models/payment_proof.dart';
 import '../../../providers/providers.dart';
 
 /// Booking request form with validation.
@@ -33,6 +40,10 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _requestsController = TextEditingController();
+  final _senderNumberController = TextEditingController();
+  final _transactionIdController = TextEditingController();
+  final _proofUrlController = TextEditingController();
+  final _paymentMessageController = TextEditingController();
 
   // Booking details
   String? _selectedRoomId;
@@ -41,12 +52,31 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   int _guests = 1;
   bool _isSubmitting = false;
 
+  Uint8List? _imageBytes;
+  String? _mimeType;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      setState(() {
+        _imageBytes = bytes;
+        _mimeType = pickedFile.mimeType ?? 'image/jpeg';
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _requestsController.dispose();
+    _senderNumberController.dispose();
+    _transactionIdController.dispose();
+    _proofUrlController.dispose();
+    _paymentMessageController.dispose();
     super.dispose();
   }
 
@@ -261,7 +291,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                   (r) => DropdownMenuItem(
                     value: r.id,
                     child: Text(
-                        '${r.name} — \$${r.pricePerNight.toStringAsFixed(0)}/night'),
+                        '${r.name} — PKR ${r.pricePerNight.toStringAsFixed(0)}/night'),
                   ),
                 )
                 .toList(),
@@ -371,6 +401,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
             ? _checkOut!.difference(_checkIn!).inDays
             : 0;
     final total = selectedRoom != null ? selectedRoom.pricePerNight * nights : 0.0;
+    final totalPkr = total.round();
 
     return Column(
       key: const ValueKey('step-2'),
@@ -418,8 +449,82 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
               const Divider(height: AppSpacing.xl),
               _buildReviewRow(
                 'Total Amount',
-                '\$${total.toStringAsFixed(2)}',
+                CurrencyUtils.formatPkr(totalPkr),
                 isHighlight: true,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.infoLight,
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Easypaisa Payment Details', style: AppTypography.titleSmall),
+                    const SizedBox(height: AppSpacing.xs),
+                    _buildReviewRow('Account Title', PaymentEnv.easypaisaAccountTitle),
+                    _buildReviewRow(
+                      'Account Number',
+                      PaymentEnv.easypaisaAccountNumber.isEmpty
+                          ? 'Configure FLUTTER_EASYPAISA_ACCOUNT_NUMBER'
+                          : PaymentEnv.easypaisaAccountNumber,
+                    ),
+                    _buildReviewRow('Amount to Send', CurrencyUtils.formatPkr(totalPkr)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SSTextField(
+                label: 'Sender Easypaisa Number',
+                hint: '03XXXXXXXXX',
+                controller: _senderNumberController,
+                prefixIcon: Icons.phone_android,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? 'Sender number is required'
+                    : null,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SSTextField(
+                label: 'Transaction ID (Optional)',
+                hint: 'EPX-123456',
+                controller: _transactionIdController,
+                prefixIcon: Icons.confirmation_number_outlined,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Text('Payment Screenshot', style: AppTypography.labelLarge),
+              const SizedBox(height: AppSpacing.xs),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                  ),
+                  child: _imageBytes != null
+                      ? Image.memory(_imageBytes!, fit: BoxFit.contain)
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.upload_file, size: 48, color: AppColors.textSecondary),
+                            SizedBox(height: AppSpacing.sm),
+                            Text('Tap to upload Easypaisa screenshot'),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SSTextField(
+                label: 'Message to Staff (Optional)',
+                hint: 'Please confirm and book for us.',
+                controller: _paymentMessageController,
+                maxLines: 2,
               ),
             ],
           ),
@@ -471,10 +576,86 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    if (_imageBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload an Easypaisa payment screenshot')),
+      );
+      return;
+    }
+
+    final rooms = await ref.read(allRoomsProvider.future);
+    final selectedRoom = rooms.firstWhere((r) => r.id == _selectedRoomId);
+    final nights = _checkOut!.difference(_checkIn!).inDays;
+    final totalUsd = selectedRoom.pricePerNight * nights;
+    final totalPkr = totalUsd.round();
+
     setState(() => _isSubmitting = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final bookingRequest = BookingRequest(
+        id: 'br-${DateTime.now().millisecondsSinceEpoch}',
+        customerName: _nameController.text.trim(),
+        customerEmail: _emailController.text.trim(),
+        customerPhone: _phoneController.text.trim(),
+        roomId: selectedRoom.id,
+        roomNumber: selectedRoom.number,
+        checkIn: _checkIn!,
+        checkOut: _checkOut!,
+        guestsCount: _guests,
+        requestedTotalPkr: totalPkr,
+        status: BookingRequestStatus.pendingPayment,
+        notes: _requestsController.text.trim().isEmpty
+            ? null
+            : _requestsController.text.trim(),
+        createdAt: DateTime.now(),
+      );
+
+      final created = await ref
+          .read(bookingRequestServiceProvider)
+          .createBookingRequest(bookingRequest);
+
+      final storageService = ref.read(convexStorageServiceProvider);
+      final storageId = await storageService.uploadImage(_imageBytes!, _mimeType!);
+      
+      if (storageId == null) {
+        throw Exception('Failed to upload image to server');
+      }
+
+      final proof = PaymentProof(
+        id: '',
+        bookingRequestId: created.id,
+        customerName: _nameController.text.trim(),
+        senderNumber: _senderNumberController.text.trim(),
+        transactionId: _transactionIdController.text.trim().isEmpty
+            ? null
+            : _transactionIdController.text.trim(),
+        amountPkr: totalPkr,
+        screenshotUrl: storageId,
+        message: _paymentMessageController.text.trim().isEmpty
+            ? null
+            : _paymentMessageController.text.trim(),
+        status: PaymentProofStatus.pending,
+        createdAt: DateTime.now(),
+      );
+
+      await ref.read(paymentProofServiceProvider).submitPaymentProof(proof);
+
+      ref.invalidate(allBookingRequestsProvider);
+      ref.invalidate(allPaymentProofsProvider);
+      ref.invalidate(pendingPaymentProofsProvider);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit payment proof.')),
+        );
+      }
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
     if (mounted) {
       setState(() => _isSubmitting = false);

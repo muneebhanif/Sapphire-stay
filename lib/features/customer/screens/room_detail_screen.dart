@@ -204,7 +204,7 @@ class RoomDetailScreen extends ConsumerWidget {
             text: TextSpan(
               children: [
                 TextSpan(
-                  text: '\$${room.pricePerNight.toStringAsFixed(0)}',
+                  text: 'PKR ${room.pricePerNight.toStringAsFixed(0)}',
                   style: AppTypography.headlineLarge.copyWith(
                     color: AppColors.accent,
                   ),

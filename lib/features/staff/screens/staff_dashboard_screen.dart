@@ -20,6 +20,7 @@ class StaffDashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bookingsAsync = ref.watch(bookingsProvider);
     final roomsAsync = ref.watch(roomsProvider);
+    final pendingProofsAsync = ref.watch(pendingPaymentProofsProvider);
     final isDesktop = Responsive.isDesktop(context);
     final cols = Responsive.gridColumns(context);
 
@@ -75,6 +76,29 @@ class StaffDashboardScreen extends ConsumerWidget {
                       value: '$occupied',
                       icon: Icons.do_not_disturb_on_outlined,
                       color: AppColors.warning,
+                    ),
+                  ),
+                  SizedBox(
+                    width: isDesktop ? 240 : double.infinity,
+                    child: pendingProofsAsync.when(
+                      loading: () => const SSStatCard(
+                        title: 'Pending Proofs',
+                        value: '...',
+                        icon: Icons.receipt_long_outlined,
+                        color: AppColors.accent,
+                      ),
+                      error: (_, __) => const SSStatCard(
+                        title: 'Pending Proofs',
+                        value: '0',
+                        icon: Icons.receipt_long_outlined,
+                        color: AppColors.accent,
+                      ),
+                      data: (proofs) => SSStatCard(
+                        title: 'Pending Proofs',
+                        value: '${proofs.length}',
+                        icon: Icons.receipt_long_outlined,
+                        color: AppColors.accent,
+                      ),
                     ),
                   ),
                 ],

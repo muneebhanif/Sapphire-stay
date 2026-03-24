@@ -14,6 +14,7 @@ import '../../features/admin/screens/admin_checkin_checkout_screen.dart';
 import '../../features/admin/widgets/admin_shell.dart';
 import '../../features/customer/screens/about_screen.dart';
 import '../../features/customer/screens/booking_confirmation_screen.dart';
+import '../../features/customer/screens/booking_payment_proof_screen.dart';
 import '../../features/customer/screens/booking_screen.dart';
 import '../../features/customer/screens/contact_screen.dart';
 import '../../features/customer/screens/gallery_screen.dart';
@@ -43,6 +44,7 @@ abstract final class RoutePaths {
   static const String rooms = '/rooms';
   static const String roomDetail = '/rooms/:id';
   static const String booking = '/booking';
+  static const String bookingPayment = '/booking/payment';
   static const String bookingConfirmation = '/booking/confirmation';
   static const String gallery = '/gallery';
   static const String services = '/services';
@@ -150,6 +152,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => const NoTransitionPage(
               child: BookingScreen(),
             ),
+          ),
+          GoRoute(
+            path: RoutePaths.bookingPayment,
+            pageBuilder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>? ?? {};
+              return NoTransitionPage(
+                child: BookingPaymentProofScreen(
+                  bookingRequestId: extra['bookingRequestId'] as String? ?? '',
+                  amountPkr: extra['amountPkr'] as int? ?? 0,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.bookingConfirmation,

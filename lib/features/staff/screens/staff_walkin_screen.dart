@@ -146,7 +146,7 @@ class _StaffWalkinScreenState extends ConsumerState<StaffWalkinScreen> {
                             return DropdownMenuItem(
                               value: room.id,
                               child: Text(
-                                '${room.number} — ${room.type.name.toUpperCase()} (\$${room.pricePerNight}/night)',
+                                '${room.number} — ${room.type.name.toUpperCase()} (PKR ${room.pricePerNight.toStringAsFixed(0)}/night)',
                               ),
                             );
                           }).toList(),

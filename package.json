@@ -1,0 +1,14 @@
+{
+  "name": "staysite-convex",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "convex": "^1.17.4",
+    "typescript": "^5.7.3"
+  }
+}

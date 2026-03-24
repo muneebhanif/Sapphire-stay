@@ -6,9 +6,11 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_button.dart';
+import '../../../core/widgets/ss_text_field.dart';
 import '../../../core/widgets/ss_loading.dart';
 import '../../../core/widgets/ss_error_state.dart';
 import '../../../core/widgets/ss_empty_state.dart';
+import '../../../models/user.dart';
 import '../../../providers/providers.dart';
 
 /// Admin staff management screen.
@@ -42,12 +44,7 @@ class AdminStaffManagementScreen extends ConsumerWidget {
                 label: 'Add Staff',
                 icon: Icons.person_add,
                 size: SSButtonSize.small,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Add staff dialog coming soon.')),
-                  );
-                },
+                onPressed: () => _showAddStaffDialog(context, ref),
               ),
             ],
           ),
@@ -167,13 +164,28 @@ class AdminStaffManagementScreen extends ConsumerWidget {
                                     value: 'delete',
                                     child: Text('Delete')),
                               ],
-                              onSelected: (action) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                        '$action staff ${user.name}'),
-                                  ),
-                                );
+                              onSelected: (action) async {
+                                if (action == 'deactivate') {
+                                  try {
+                                    await ref.read(staffMgmtServiceProvider).deactivateStaff(user.id);
+                                    ref.invalidate(staffListProvider);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('${user.name} deactivated.'), backgroundColor: AppColors.success),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                                      );
+                                    }
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('$action staff ${user.name}')),
+                                  );
+                                }
                               },
                             ),
                           ),
@@ -187,6 +199,91 @@ class AdminStaffManagementScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showAddStaffDialog(BuildContext context, WidgetRef ref) {
+    final nameCtrl = TextEditingController();
+    final emailCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Staff Member'),
+        content: SizedBox(
+          width: 400,
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SSTextField(
+                  label: 'Full Name',
+                  hint: 'e.g. James Smith',
+                  controller: nameCtrl,
+                  prefixIcon: Icons.person_outline,
+                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SSTextField(
+                  label: 'Email',
+                  hint: 'staff@email.com',
+                  controller: emailCtrl,
+                  prefixIcon: Icons.email_outlined,
+                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                SSTextField(
+                  label: 'Phone',
+                  hint: '+920300000000',
+                  controller: phoneCtrl,
+                  prefixIcon: Icons.phone_outlined,
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (!(formKey.currentState?.validate() ?? false)) return;
+              try {
+                await ref.read(staffMgmtServiceProvider).createStaff(
+                  User(
+                    id: '',
+                    name: nameCtrl.text.trim(),
+                    email: emailCtrl.text.trim(),
+                    phone: phoneCtrl.text.trim(),
+                    role: UserRole.staff,
+                    isActive: true,
+                    createdAt: DateTime.now(),
+                  ),
+                );
+                ref.invalidate(staffListProvider);
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Staff ${nameCtrl.text} added!'), backgroundColor: AppColors.success),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
+                  );
+                }
+              }
+            },
+            child: const Text('Add Staff'),
+          ),
+        ],
+      ),
     );
   }
 }

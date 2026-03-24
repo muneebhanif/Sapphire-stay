@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_constants.dart';
@@ -7,19 +8,20 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../providers/providers.dart';
 
 /// Full-width hero banner for the home page.
 ///
 /// Features:
-///   • Background image with dark overlay for text readability
+///   • Background image from database config with dark overlay
 ///   • Animated headline and tagline
 ///   • Primary CTA (Book Now) + secondary CTA (Explore Rooms)
 ///   • Responsive layout (stacks on mobile)
-class HeroSection extends StatelessWidget {
+class HeroSection extends ConsumerWidget {
   const HeroSection({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final height = Responsive.value<double>(
       context,
       mobile: 500,
@@ -27,12 +29,25 @@ class HeroSection extends StatelessWidget {
       desktop: 650,
     );
 
+    final configAsync = ref.watch(siteConfigProvider);
+    final heroImage = configAsync.whenOrNull(
+      data: (config) => config['hero_image'],
+    ) ?? AppConstants.heroImage;
+
+    final hotelName = configAsync.whenOrNull(
+      data: (config) => config['hotel_name'],
+    ) ?? AppConstants.hotelName;
+
+    final tagline = configAsync.whenOrNull(
+      data: (config) => config['tagline'],
+    ) ?? AppConstants.tagline;
+
     return Container(
       height: height,
       width: double.infinity,
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: const NetworkImage(AppConstants.heroImage),
+          image: NetworkImage(heroImage),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             AppColors.primary.withValues(alpha: 0.65),
@@ -62,7 +77,7 @@ class HeroSection extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                   ),
                   child: Text(
-                    'WELCOME TO ${AppConstants.hotelName.toUpperCase()}',
+                    'WELCOME TO ${hotelName.toUpperCase()}',
                     style: AppTypography.labelMedium.copyWith(
                       color: AppColors.accent,
                       letterSpacing: 2,
@@ -73,7 +88,7 @@ class HeroSection extends StatelessWidget {
 
                 // ── Headline ──
                 Text(
-                  AppConstants.tagline,
+                  tagline,
                   style: Responsive.value(
                     context,
                     mobile: AppTypography.displaySmall,

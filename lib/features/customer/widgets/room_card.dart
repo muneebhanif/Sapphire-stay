@@ -77,7 +77,7 @@ class RoomCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: '\$${room.pricePerNight.toStringAsFixed(0)}',
+                      text: 'PKR ${room.pricePerNight.toStringAsFixed(0)}',
                       style: AppTypography.titleLarge.copyWith(
                         color: AppColors.accent,
                       ),

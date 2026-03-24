@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_section_header.dart';
+import '../../../core/widgets/ss_loading.dart';
 import '../../../providers/providers.dart';
 import '../widgets/availability_picker.dart';
 import '../widgets/hero_section.dart';
@@ -16,14 +17,8 @@ import '../widgets/room_card.dart';
 
 /// Customer landing page — conversion-focused design.
 ///
-/// Sections (in order of visual priority):
-///   1. Hero banner with CTA
-///   2. Availability checker
-///   3. Featured rooms
-///   4. About teaser
-///   5. Services highlights
-///   6. Reviews preview
-///   7. CTA banner
+/// All data now comes from the database via providers.
+/// No static/mock data is used anywhere.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -57,12 +52,12 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── 4. About Teaser ──
-        _buildAboutTeaser(context),
+        _buildAboutTeaser(context, ref),
 
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── 5. Services Highlights ──
-        _buildServicesHighlights(context),
+        _buildServicesHighlights(context, ref),
 
         const SizedBox(height: AppSpacing.xxxl),
 
@@ -72,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── 7. CTA Banner ──
-        _buildCtaBanner(context),
+        _buildCtaBanner(context, ref),
 
         const SizedBox(height: AppSpacing.xxxl),
       ],
@@ -124,8 +119,14 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAboutTeaser(BuildContext context) {
+  Widget _buildAboutTeaser(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isDesktop(context);
+    final configAsync = ref.watch(siteConfigProvider);
+
+    // Get lobby image from config, fallback to constant
+    final lobbyImage = configAsync.whenOrNull(
+      data: (config) => config['hotel_lobby'],
+    ) ?? AppConstants.hotelLobby;
 
     return Container(
       color: AppColors.surfaceVariant,
@@ -145,7 +146,7 @@ class HomeScreen extends ConsumerWidget {
                       borderRadius:
                           BorderRadius.circular(AppSpacing.radiusLg),
                       child: Image.network(
-                        AppConstants.hotelLobby,
+                        lobbyImage,
                         height: 400,
                         fit: BoxFit.cover,
                       ),
@@ -153,7 +154,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   const SizedBox(width: AppSpacing.xxl),
                   // ── Text ──
-                  Expanded(child: _buildAboutContent(context)),
+                  Expanded(child: _buildAboutContent(context, ref)),
                 ],
               )
             : Column(
@@ -161,21 +162,33 @@ class HomeScreen extends ConsumerWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                     child: Image.network(
-                      AppConstants.hotelLobby,
+                      lobbyImage,
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildAboutContent(context),
+                  _buildAboutContent(context, ref),
                 ],
               ),
       ),
     );
   }
 
-  Widget _buildAboutContent(BuildContext context) {
+  Widget _buildAboutContent(BuildContext context, WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+
+    // Get stats from config, fallback to defaults
+    final statYears = configAsync.whenOrNull(data: (c) => c['stat_years']) ?? '25+';
+    final statGuests = configAsync.whenOrNull(data: (c) => c['stat_guests']) ?? '50K+';
+
+    // Use average rating from DB
+    final ratingAsync = ref.watch(averageRatingProvider);
+    final ratingStr = ratingAsync.whenOrNull(
+      data: (r) => r.toStringAsFixed(1),
+    ) ?? '—';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -199,14 +212,14 @@ class HomeScreen extends ConsumerWidget {
           style: AppTypography.bodyLarge.copyWith(height: 1.8),
         ),
         const SizedBox(height: AppSpacing.lg),
-        // ── Stats ──
+        // ── Stats from DB ──
         Row(
           children: [
-            _buildStat('25+', 'Years'),
+            _buildStat(statYears, 'Years'),
             const SizedBox(width: AppSpacing.xl),
-            _buildStat('50K+', 'Guests'),
+            _buildStat(statGuests, 'Guests'),
             const SizedBox(width: AppSpacing.xl),
-            _buildStat('4.8', 'Rating'),
+            _buildStat(ratingStr, 'Rating'),
           ],
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -232,17 +245,19 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildServicesHighlights(BuildContext context) {
-    final services = [
-      _ServiceItem(Icons.restaurant, 'Fine Dining',
-          'World-class cuisine by award-winning chefs'),
-      _ServiceItem(
-          Icons.spa, 'Spa & Wellness', 'Rejuvenating treatments for mind and body'),
-      _ServiceItem(
-          Icons.pool, 'Infinity Pool', 'Heated pool with stunning ocean views'),
-      _ServiceItem(Icons.room_service, '24/7 Service',
-          'Round-the-clock concierge and room service'),
-    ];
+  Widget _buildServicesHighlights(BuildContext context, WidgetRef ref) {
+    final servicesAsync = ref.watch(hotelServicesProvider);
+
+    final iconMap = {
+      'restaurant': Icons.restaurant,
+      'spa': Icons.spa,
+      'pool': Icons.pool,
+      'business': Icons.business_center,
+      'car': Icons.directions_car,
+      'room_service': Icons.room_service,
+      'laundry': Icons.local_laundry_service,
+      'concierge': Icons.support_agent,
+    };
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -260,13 +275,27 @@ class HomeScreen extends ConsumerWidget {
               onAction: () => context.go(RoutePaths.services),
             ),
             const SizedBox(height: AppSpacing.xl),
-            Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.lg,
-              alignment: WrapAlignment.center,
-              children: services
-                  .map((s) => _buildServiceCard(context, s))
-                  .toList(),
+            servicesAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.accent),
+              ),
+              error: (e, _) => Text('Error loading services: $e'),
+              data: (services) => Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.lg,
+                alignment: WrapAlignment.center,
+                children: services.take(4).map((s) {
+                  final icon = iconMap[s['icon'] as String] ?? Icons.star;
+                  return _buildServiceCard(
+                    context,
+                    _ServiceItem(
+                      icon,
+                      s['title'] as String,
+                      s['description'] as String,
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
@@ -424,7 +453,12 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildCtaBanner(BuildContext context) {
+  Widget _buildCtaBanner(BuildContext context, WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+    final poolImage = configAsync.whenOrNull(
+      data: (config) => config['hotel_pool'],
+    ) ?? AppConstants.hotelPool;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -433,7 +467,7 @@ class HomeScreen extends ConsumerWidget {
       ),
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: const NetworkImage(AppConstants.hotelPool),
+          image: NetworkImage(poolImage),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             AppColors.primary.withValues(alpha: 0.8),

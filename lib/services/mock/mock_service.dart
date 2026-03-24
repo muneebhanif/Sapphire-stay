@@ -5,6 +5,8 @@ import '../../models/invoice.dart';
 import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../models/user.dart';
+import '../../models/booking_request.dart';
+import '../../models/payment_proof.dart';
 import '../api/api_service.dart';
 import 'mock_data.dart';
 
@@ -261,4 +263,112 @@ class MockStaffManagementService implements StaffManagementService {
 
   @override
   Future<void> deactivateStaff(String id) => _simulateDelay(null);
+}
+
+// ─── Booking Request Mock ─────────────────────────────────────────
+class MockBookingRequestService implements BookingRequestService {
+  @override
+  Future<BookingRequest> createBookingRequest(BookingRequest request) async {
+    MockData.bookingRequests.insert(0, request);
+    return _simulateDelay(request);
+  }
+
+  @override
+  Future<List<BookingRequest>> getAllBookingRequests() =>
+      _simulateDelay(MockData.bookingRequests);
+}
+
+// ─── Payment Proof Mock ───────────────────────────────────────────
+class MockPaymentProofService implements PaymentProofService {
+  @override
+  Future<PaymentProof> submitPaymentProof(PaymentProof proof) async {
+    MockData.paymentProofs.insert(0, proof);
+
+    final reqIndex = MockData.bookingRequests
+        .indexWhere((r) => r.id == proof.bookingRequestId);
+    if (reqIndex != -1) {
+      final req = MockData.bookingRequests[reqIndex];
+      MockData.bookingRequests[reqIndex] = BookingRequest(
+        id: req.id,
+        customerName: req.customerName,
+        customerEmail: req.customerEmail,
+        customerPhone: req.customerPhone,
+        roomId: req.roomId,
+        roomNumber: req.roomNumber,
+        checkIn: req.checkIn,
+        checkOut: req.checkOut,
+        guestsCount: req.guestsCount,
+        requestedTotalPkr: req.requestedTotalPkr,
+        status: BookingRequestStatus.paymentSubmitted,
+        notes: req.notes,
+        createdAt: req.createdAt,
+      );
+    }
+
+    return _simulateDelay(proof);
+  }
+
+  @override
+  Future<List<PaymentProof>> getAllPaymentProofs() =>
+      _simulateDelay(MockData.paymentProofs);
+
+  @override
+  Future<List<PaymentProof>> getPendingPaymentProofs() => _simulateDelay(
+        MockData.paymentProofs
+            .where((p) => p.status == PaymentProofStatus.pending)
+            .toList(),
+      );
+
+  @override
+  Future<PaymentProof> reviewPaymentProof(
+    String proofId, {
+    required bool approved,
+    required String staffName,
+    String? rejectionReason,
+  }) async {
+    final index = MockData.paymentProofs.indexWhere((p) => p.id == proofId);
+    if (index == -1) throw Exception('Payment proof not found');
+
+    final current = MockData.paymentProofs[index];
+    final updated = PaymentProof(
+      id: current.id,
+      bookingRequestId: current.bookingRequestId,
+      customerName: current.customerName,
+      senderNumber: current.senderNumber,
+      transactionId: current.transactionId,
+      amountPkr: current.amountPkr,
+      screenshotUrl: current.screenshotUrl,
+      message: current.message,
+      status: approved ? PaymentProofStatus.approved : PaymentProofStatus.rejected,
+      createdAt: current.createdAt,
+      reviewedBy: staffName,
+    );
+
+    MockData.paymentProofs[index] = updated;
+
+    final reqIndex = MockData.bookingRequests
+        .indexWhere((r) => r.id == current.bookingRequestId);
+    if (reqIndex != -1) {
+      final req = MockData.bookingRequests[reqIndex];
+      MockData.bookingRequests[reqIndex] = BookingRequest(
+        id: req.id,
+        customerName: req.customerName,
+        customerEmail: req.customerEmail,
+        customerPhone: req.customerPhone,
+        roomId: req.roomId,
+        roomNumber: req.roomNumber,
+        checkIn: req.checkIn,
+        checkOut: req.checkOut,
+        guestsCount: req.guestsCount,
+        requestedTotalPkr: req.requestedTotalPkr,
+        status: approved
+            ? BookingRequestStatus.verified
+            : BookingRequestStatus.rejected,
+        notes: rejectionReason ?? req.notes,
+        createdAt: req.createdAt,
+      );
+    }
+
+    return _simulateDelay(updated);
+  }
 }

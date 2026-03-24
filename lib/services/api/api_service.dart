@@ -5,6 +5,8 @@ import '../../models/invoice.dart';
 import '../../models/payment.dart';
 import '../../models/review.dart';
 import '../../models/user.dart';
+import '../../models/booking_request.dart';
+import '../../models/payment_proof.dart';
 
 /// Abstract API service contracts.
 ///
@@ -90,4 +92,22 @@ abstract class StaffManagementService {
   Future<User> createStaff(User staff);
   Future<User> updateStaff(User staff);
   Future<void> deactivateStaff(String id);
+}
+
+// ─── Booking Request + Payment Proof (Convex flow) ───────────────
+abstract class BookingRequestService {
+  Future<BookingRequest> createBookingRequest(BookingRequest request);
+  Future<List<BookingRequest>> getAllBookingRequests();
+}
+
+abstract class PaymentProofService {
+  Future<PaymentProof> submitPaymentProof(PaymentProof proof);
+  Future<List<PaymentProof>> getAllPaymentProofs();
+  Future<List<PaymentProof>> getPendingPaymentProofs();
+  Future<PaymentProof> reviewPaymentProof(
+    String proofId, {
+    required bool approved,
+    required String staffName,
+    String? rejectionReason,
+  });
 }

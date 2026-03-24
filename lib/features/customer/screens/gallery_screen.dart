@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../services/mock/mock_data.dart';
+import '../../../core/widgets/ss_loading.dart';
+import '../../../core/widgets/ss_error_state.dart';
+import '../../../providers/providers.dart';
 
 /// Hotel & room image gallery with lightbox overlay.
-class GalleryScreen extends StatelessWidget {
+/// All images now fetched from the database.
+class GalleryScreen extends ConsumerWidget {
   const GalleryScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final images = MockData.galleryImages;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final imagesAsync = ref.watch(galleryImagesProvider);
     final columns = Responsive.value(context, mobile: 2, tablet: 3, desktop: 4);
 
     return Column(
@@ -57,24 +61,33 @@ class GalleryScreen extends StatelessWidget {
           padding: EdgeInsets.all(Responsive.pagePadding(context)),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: AppSpacing.sm,
-                mainAxisSpacing: AppSpacing.sm,
-                childAspectRatio: 1.2,
+            child: imagesAsync.when(
+              loading: () => const Center(
+                child: SSLoading(type: SSLoadingType.card),
               ),
-              itemCount: images.length,
-              itemBuilder: (context, index) {
-                final img = images[index];
-                return _GalleryItem(
-                  imageUrl: img['url']!,
-                  caption: img['caption']!,
-                  onTap: () => _showLightbox(context, images, index),
-                );
-              },
+              error: (e, _) => SSErrorState(
+                message: e.toString(),
+                onRetry: () => ref.invalidate(galleryImagesProvider),
+              ),
+              data: (images) => GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: columns,
+                  crossAxisSpacing: AppSpacing.sm,
+                  mainAxisSpacing: AppSpacing.sm,
+                  childAspectRatio: 1.2,
+                ),
+                itemCount: images.length,
+                itemBuilder: (context, index) {
+                  final img = images[index];
+                  return _GalleryItem(
+                    imageUrl: img['url']!,
+                    caption: img['caption']!,
+                    onTap: () => _showLightbox(context, images, index),
+                  );
+                },
+              ),
             ),
           ),
         ),

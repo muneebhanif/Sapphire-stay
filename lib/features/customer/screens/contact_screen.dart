@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -7,16 +8,18 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_text_field.dart';
+import '../../../providers/providers.dart';
 
 /// Contact page with form, map placeholder, and hotel info.
-class ContactScreen extends StatefulWidget {
+/// Contact details now come from the database.
+class ContactScreen extends ConsumerStatefulWidget {
   const ContactScreen({super.key});
 
   @override
-  State<ContactScreen> createState() => _ContactScreenState();
+  ConsumerState<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactScreenState extends State<ContactScreen> {
+class _ContactScreenState extends ConsumerState<ContactScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -206,24 +209,29 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Widget _buildContactInfo() {
+    final configAsync = ref.watch(siteConfigProvider);
+    final address = configAsync.whenOrNull(data: (c) => c['address']) ?? AppConstants.address;
+    final phone = configAsync.whenOrNull(data: (c) => c['phone']) ?? AppConstants.phone;
+    final email = configAsync.whenOrNull(data: (c) => c['email']) ?? AppConstants.email;
+
     return Column(
       children: [
         _buildInfoCard(
           Icons.location_on_outlined,
           'Address',
-          AppConstants.address,
+          address,
         ),
         const SizedBox(height: AppSpacing.md),
         _buildInfoCard(
           Icons.phone_outlined,
           'Phone',
-          AppConstants.phone,
+          phone,
         ),
         const SizedBox(height: AppSpacing.md),
         _buildInfoCard(
           Icons.email_outlined,
           'Email',
-          AppConstants.email,
+          email,
         ),
         const SizedBox(height: AppSpacing.md),
         _buildInfoCard(

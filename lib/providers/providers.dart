@@ -7,25 +7,49 @@ import '../models/payment.dart';
 import '../models/review.dart';
 import '../models/room.dart';
 import '../models/user.dart';
+import '../models/booking_request.dart';
+import '../models/payment_proof.dart';
 import '../services/api/api_service.dart';
-import '../services/mock/mock_service.dart';
+import '../core/services/convex_api_service.dart';
+import '../core/services/convex_client_provider.dart';
+import '../core/services/convex_storage_service.dart';
 
 /// ─── Service Providers ────────────────────────────────────────────
 ///
-/// These providers expose the mock implementations.
-/// When the real backend is ready, swap [Mock*Service] with the
-/// HTTP implementation — ZERO changes needed in UI code.
+/// All providers now use Convex-backed implementations.
+/// No mock data anywhere — everything comes from the database.
 
-final authServiceProvider = Provider<AuthService>((_) => MockAuthService());
-final roomServiceProvider = Provider<RoomService>((_) => MockRoomService());
-final bookingServiceProvider = Provider<BookingService>((_) => MockBookingService());
-final guestServiceProvider = Provider<GuestService>((_) => MockGuestService());
-final invoiceServiceProvider = Provider<InvoiceService>((_) => MockInvoiceService());
-final paymentServiceProvider = Provider<PaymentService>((_) => MockPaymentService());
-final reviewServiceProvider = Provider<ReviewService>((_) => MockReviewService());
-final reportServiceProvider = Provider<ReportService>((_) => MockReportService());
+final authServiceProvider = Provider<AuthService>((ref) =>
+    ConvexAuthService(ref.watch(convexClientProvider)));
+final roomServiceProvider = Provider<RoomService>((ref) => ConvexRoomService(ref.watch(convexClientProvider)));
+final bookingServiceProvider = Provider<BookingService>((ref) => ConvexBookingService(ref.watch(convexClientProvider)));
+final guestServiceProvider = Provider<GuestService>((ref) => ConvexGuestService(ref.watch(convexClientProvider)));
+final invoiceServiceProvider = Provider<InvoiceService>((ref) => ConvexInvoiceService(ref.watch(convexClientProvider)));
+final paymentServiceProvider = Provider<PaymentService>((ref) => ConvexPaymentService(ref.watch(convexClientProvider)));
+final reviewServiceProvider = Provider<ReviewService>((ref) => ConvexReviewService(ref.watch(convexClientProvider)));
+final reportServiceProvider = Provider<ReportService>((ref) => ConvexReportService(ref.watch(convexClientProvider)));
 final staffMgmtServiceProvider = Provider<StaffManagementService>(
-    (_) => MockStaffManagementService());
+    (ref) => ConvexStaffManagementService(ref.watch(convexClientProvider)));
+final bookingRequestServiceProvider = Provider<BookingRequestService>((ref) {
+  final client = ref.watch(convexClientProvider);
+  return ConvexBookingRequestService(client);
+});
+
+final paymentProofServiceProvider = Provider<PaymentProofService>((ref) {
+  final client = ref.watch(convexClientProvider);
+  final storage = ref.watch(convexStorageServiceProvider);
+  return ConvexPaymentProofService(client, storage);
+});
+
+/// ─── Gallery, Services, Site Config Providers ─────────────────────
+final galleryServiceProvider = Provider<ConvexGalleryService>((ref) =>
+    ConvexGalleryService(ref.watch(convexClientProvider)));
+
+final hotelServicesServiceProvider = Provider<ConvexHotelServicesService>((ref) =>
+    ConvexHotelServicesService(ref.watch(convexClientProvider)));
+
+final siteConfigServiceProvider = Provider<ConvexSiteConfigService>((ref) =>
+    ConvexSiteConfigService(ref.watch(convexClientProvider)));
 
 /// ─── Auth State ───────────────────────────────────────────────────
 ///
@@ -138,6 +162,32 @@ final allStaffProvider = FutureProvider<List<User>>((ref) {
   return ref.watch(staffMgmtServiceProvider).getAllStaff();
 });
 
+/// ─── Booking Request + Payment Proof Providers ───────────────────
+final allBookingRequestsProvider = FutureProvider<List<BookingRequest>>((ref) {
+  return ref.watch(bookingRequestServiceProvider).getAllBookingRequests();
+});
+
+final allPaymentProofsProvider = FutureProvider<List<PaymentProof>>((ref) {
+  return ref.watch(paymentProofServiceProvider).getAllPaymentProofs();
+});
+
+final pendingPaymentProofsProvider = FutureProvider<List<PaymentProof>>((ref) {
+  return ref.watch(paymentProofServiceProvider).getPendingPaymentProofs();
+});
+
+/// ─── Gallery, Services, Site Config ──────────────────────────────
+final galleryImagesProvider = FutureProvider<List<Map<String, String>>>((ref) {
+  return ref.watch(galleryServiceProvider).getGalleryImages();
+});
+
+final hotelServicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
+  return ref.watch(hotelServicesServiceProvider).getHotelServices();
+});
+
+final siteConfigProvider = FutureProvider<Map<String, String>>((ref) {
+  return ref.watch(siteConfigServiceProvider).getSiteConfig();
+});
+
 /// ─── Convenience aliases (used in screens) ────────────────────────
 /// These keep screen code concise while maintaining backward compat.
 final roomsProvider = allRoomsProvider;
@@ -147,3 +197,5 @@ final invoicesProvider = allInvoicesProvider;
 final paymentsProvider = allPaymentsProvider;
 final reviewsProvider = allReviewsProvider;
 final staffListProvider = allStaffProvider;
+final bookingRequestsProvider = allBookingRequestsProvider;
+final paymentProofsProvider = allPaymentProofsProvider;

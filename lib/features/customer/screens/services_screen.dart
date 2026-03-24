@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
-import '../../../services/mock/mock_data.dart';
+import '../../../core/widgets/ss_loading.dart';
+import '../../../core/widgets/ss_error_state.dart';
+import '../../../providers/providers.dart';
 
-/// Hotel services page — displays all available services.
-class ServicesScreen extends StatelessWidget {
+/// Hotel services page — displays all available services from the database.
+class ServicesScreen extends ConsumerWidget {
   const ServicesScreen({super.key});
 
   static final _iconMap = {
@@ -22,8 +25,8 @@ class ServicesScreen extends StatelessWidget {
   };
 
   @override
-  Widget build(BuildContext context) {
-    final services = MockData.hotelServices;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final servicesAsync = ref.watch(hotelServicesProvider);
 
     return Column(
       children: [
@@ -70,19 +73,28 @@ class ServicesScreen extends StatelessWidget {
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
-            child: Wrap(
-              spacing: AppSpacing.lg,
-              runSpacing: AppSpacing.lg,
-              alignment: WrapAlignment.center,
-              children: services.map((s) {
-                final icon = _iconMap[s['icon']] ?? Icons.star;
-                return _buildServiceCard(
-                  context,
-                  icon: icon,
-                  title: s['title'] as String,
-                  description: s['description'] as String,
-                );
-              }).toList(),
+            child: servicesAsync.when(
+              loading: () => const Center(
+                child: SSLoading(type: SSLoadingType.card),
+              ),
+              error: (e, _) => SSErrorState(
+                message: e.toString(),
+                onRetry: () => ref.invalidate(hotelServicesProvider),
+              ),
+              data: (services) => Wrap(
+                spacing: AppSpacing.lg,
+                runSpacing: AppSpacing.lg,
+                alignment: WrapAlignment.center,
+                children: services.map((s) {
+                  final icon = _iconMap[s['icon']] ?? Icons.star;
+                  return _buildServiceCard(
+                    context,
+                    icon: icon,
+                    title: s['title'] as String,
+                    description: s['description'] as String,
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),

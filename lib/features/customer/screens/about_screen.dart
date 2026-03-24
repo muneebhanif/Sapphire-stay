@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../providers/providers.dart';
 
 /// About page — hotel story, mission, and team highlights.
-class AboutScreen extends StatelessWidget {
+/// Stats and images now come from the database.
+class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       children: [
         // ── Page Header ──
-        _buildPageHeader(context),
+        _buildPageHeader(context, ref),
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── Story Section ──
-        _buildStorySection(context),
+        _buildStorySection(context, ref),
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── Values Section ──
@@ -27,13 +30,18 @@ class AboutScreen extends StatelessWidget {
         const SizedBox(height: AppSpacing.xxxl),
 
         // ── Stats Section ──
-        _buildStatsSection(context),
+        _buildStatsSection(context, ref),
         const SizedBox(height: AppSpacing.xxxl),
       ],
     );
   }
 
-  Widget _buildPageHeader(BuildContext context) {
+  Widget _buildPageHeader(BuildContext context, WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+    final exteriorImage = configAsync.whenOrNull(
+      data: (config) => config['hotel_exterior'],
+    ) ?? AppConstants.hotelExterior;
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -42,7 +50,7 @@ class AboutScreen extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: const NetworkImage(AppConstants.hotelExterior),
+          image: NetworkImage(exteriorImage),
           fit: BoxFit.cover,
           colorFilter: ColorFilter.mode(
             AppColors.primary.withValues(alpha: 0.7),
@@ -87,8 +95,12 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStorySection(BuildContext context) {
+  Widget _buildStorySection(BuildContext context, WidgetRef ref) {
     final isDesktop = Responsive.isDesktop(context);
+    final configAsync = ref.watch(siteConfigProvider);
+    final lobbyImage = configAsync.whenOrNull(
+      data: (config) => config['hotel_lobby'],
+    ) ?? AppConstants.hotelLobby;
 
     return Padding(
       padding: EdgeInsets.symmetric(
@@ -104,7 +116,7 @@ class AboutScreen extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                       child: Image.network(
-                        AppConstants.hotelLobby,
+                        lobbyImage,
                         height: 450,
                         fit: BoxFit.cover,
                       ),
@@ -119,7 +131,7 @@ class AboutScreen extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                     child: Image.network(
-                      AppConstants.hotelLobby,
+                      lobbyImage,
                       height: 250,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -260,12 +272,19 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsSection(BuildContext context) {
+  Widget _buildStatsSection(BuildContext context, WidgetRef ref) {
+    final configAsync = ref.watch(siteConfigProvider);
+
+    final statYears = configAsync.whenOrNull(data: (c) => c['stat_years']) ?? '—';
+    final statGuests = configAsync.whenOrNull(data: (c) => c['stat_guests']) ?? '—';
+    final statStaff = configAsync.whenOrNull(data: (c) => c['stat_staff']) ?? '—';
+    final statAwards = configAsync.whenOrNull(data: (c) => c['stat_awards']) ?? '—';
+
     final stats = [
-      _StatItem('25+', 'Years of Excellence'),
-      _StatItem('50K+', 'Happy Guests'),
-      _StatItem('100+', 'Expert Staff'),
-      _StatItem('15+', 'Awards Won'),
+      _StatItem(statYears, 'Years of Excellence'),
+      _StatItem(statGuests, 'Happy Guests'),
+      _StatItem(statStaff, 'Expert Staff'),
+      _StatItem(statAwards, 'Awards Won'),
     ];
 
     return Padding(
