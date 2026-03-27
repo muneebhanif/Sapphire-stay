@@ -17,7 +17,14 @@ class ConvexClient {
   }
 
   Future<dynamic> _callEndpoint(String path, Map<String, dynamic> args, bool isMutation) async {
-    final uri = Uri.parse('$baseUrl/api');
+    if (baseUrl.trim().isEmpty) {
+      throw Exception('Convex Base URL is empty. Did you pass --dart-define-from-file=.env or set FLUTTER_CONVEX_HTTP_URL?');
+    }
+    
+    // Ensure we don't have double slashes if baseUrl has a trailing slash.
+    final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final uri = Uri.parse('$cleanBaseUrl/api');
+    
     final response = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},

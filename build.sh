@@ -24,7 +24,27 @@ flutter --version
 echo ">>> Getting dependencies..."
 flutter pub get
 
+echo ">>> Preparing environment variables..."
+if [ -z "$FLUTTER_CONVEX_URL" ] && [ -n "$CONVEX_URL" ]; then
+  export FLUTTER_CONVEX_URL="$CONVEX_URL"
+fi
+if [ -z "$FLUTTER_CONVEX_HTTP_URL" ] && [ -n "$CONVEX_SITE_URL" ]; then
+  export FLUTTER_CONVEX_HTTP_URL="$CONVEX_SITE_URL"
+fi
+
+if [ -n "$FLUTTER_CONVEX_URL" ]; then
+  echo ">>> Generating .env file..."
+  cat <<EOF > .env
+FLUTTER_CONVEX_URL=$FLUTTER_CONVEX_URL
+FLUTTER_CONVEX_HTTP_URL=$FLUTTER_CONVEX_HTTP_URL
+EOF
+fi
+
 echo ">>> Building Flutter web (release)..."
-flutter build web --release
+if [ -f .env ]; then
+  flutter build web --release --dart-define-from-file=.env
+else
+  flutter build web --release
+fi
 
 echo ">>> Build complete! Output in build/web"
