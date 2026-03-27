@@ -29,13 +29,13 @@ abstract final class AppConstants {
   static const String hotelRestaurant =
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80';
   static const String hotelSpa =
-      'https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1200&q=80';
+      'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&q=80';
 
   // Room type placeholders
   static const String roomStandard =
       'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80';
   static const String roomDeluxe =
-      'https://images.unsplash.com/photo-1590490360182-c33d955c3795?w=800&q=80';
+      'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80';
   static const String roomSuite =
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80';
   static const String roomPresidential =

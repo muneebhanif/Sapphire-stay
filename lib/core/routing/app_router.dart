@@ -100,17 +100,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return RoutePaths.login;
         }
 
-        if (isGoingToAdmin && authState.role != 'admin') {
+        if (isGoingToAdmin && authState.role.name != 'admin') {
           return RoutePaths.home;
         }
 
-        if (isGoingToStaff && authState.role != 'staff' && authState.role != 'admin') {
+        if (isGoingToStaff && authState.role.name != 'staff' && authState.role.name != 'admin') {
           return RoutePaths.home;
         }
       } else if (path == RoutePaths.login) {
         if (authState != null) {
-          if (authState.role == 'admin') return RoutePaths.adminDashboard;
-          if (authState.role == 'staff') return RoutePaths.staffDashboard;
+          if (authState.role.name == 'admin') return RoutePaths.adminDashboard;
+          if (authState.role.name == 'staff') return RoutePaths.staffDashboard;
           return RoutePaths.home;
         }
       }
