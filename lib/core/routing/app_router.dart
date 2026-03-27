@@ -32,6 +32,7 @@ import '../../features/staff/screens/staff_checkin_checkout_screen.dart';
 import '../../features/staff/screens/staff_invoice_screen.dart';
 import '../../features/staff/screens/staff_payment_screen.dart';
 import '../../features/staff/widgets/staff_shell.dart';
+import '../../providers/providers.dart';
 
 /// Centralized route path constants.
 ///
