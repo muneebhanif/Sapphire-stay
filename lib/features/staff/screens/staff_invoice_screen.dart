@@ -10,6 +10,7 @@ import '../../../core/widgets/ss_error_state.dart';
 import '../../../core/widgets/ss_empty_state.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../providers/providers.dart';
+import '../../admin/widgets/add_invoice_dialog.dart';
 
 /// Staff invoice management screen.
 class StaffInvoiceScreen extends ConsumerWidget {
@@ -44,8 +45,9 @@ class StaffInvoiceScreen extends ConsumerWidget {
                 icon: Icons.add,
                 size: SSButtonSize.small,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Create invoice dialog coming soon.')),
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddInvoiceDialog(),
                   );
                 },
               ),

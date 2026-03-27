@@ -12,6 +12,7 @@ import '../../../core/widgets/ss_empty_state.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../models/payment_proof.dart';
 import '../../../providers/providers.dart';
+import '../../admin/widgets/add_payment_dialog.dart';
 
 /// Staff payments screen.
 class StaffPaymentScreen extends ConsumerWidget {
@@ -48,8 +49,9 @@ class StaffPaymentScreen extends ConsumerWidget {
                 icon: Icons.add,
                 size: SSButtonSize.small,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Manual payment entry coming soon.')),
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddPaymentDialog(),
                   );
                 },
               ),

@@ -12,6 +12,8 @@ import '../../../core/widgets/ss_empty_state.dart';
 import '../../../models/booking.dart';
 import '../../../providers/providers.dart';
 
+import '../widgets/add_booking_dialog.dart';
+
 /// Admin booking management screen with full CRUD.
 class AdminBookingManagementScreen extends ConsumerStatefulWidget {
   const AdminBookingManagementScreen({super.key});
@@ -75,9 +77,9 @@ class _AdminBookingManagementScreenState
                 icon: Icons.add,
                 size: SSButtonSize.small,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('New booking dialog coming soon.')),
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddBookingDialog(),
                   );
                 },
               ),

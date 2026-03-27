@@ -10,6 +10,7 @@ import '../../../core/widgets/ss_loading.dart';
 import '../../../core/widgets/ss_error_state.dart';
 import '../../../core/widgets/ss_empty_state.dart';
 import '../../../providers/providers.dart';
+import '../widgets/add_payment_dialog.dart';
 
 /// Admin payments screen.
 class AdminPaymentScreen extends ConsumerWidget {
@@ -43,9 +44,9 @@ class AdminPaymentScreen extends ConsumerWidget {
                 icon: Icons.add,
                 size: SSButtonSize.small,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Record payment dialog coming soon.')),
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddPaymentDialog(),
                   );
                 },
               ),

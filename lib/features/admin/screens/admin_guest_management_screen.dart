@@ -12,6 +12,8 @@ import '../../../core/widgets/ss_empty_state.dart';
 import '../../../models/guest.dart';
 import '../../../providers/providers.dart';
 
+import '../widgets/add_guest_dialog.dart';
+
 /// Admin guest management screen.
 class AdminGuestManagementScreen extends ConsumerWidget {
   const AdminGuestManagementScreen({super.key});
@@ -43,8 +45,9 @@ class AdminGuestManagementScreen extends ConsumerWidget {
                 icon: Icons.person_add,
                 size: SSButtonSize.small,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Add guest dialog coming soon.')),
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddGuestDialog(),
                   );
                 },
               ),
