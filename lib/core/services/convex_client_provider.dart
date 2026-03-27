@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../config/convex_env.dart';
 
 class ConvexClient {
@@ -25,9 +26,15 @@ class ConvexClient {
     final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
     final uri = Uri.parse('$cleanBaseUrl/api');
     
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('convex_auth_token');
+    
     final response = await http.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer \$token',
+      },
       body: jsonEncode({
         'path': path,
         'args': args,

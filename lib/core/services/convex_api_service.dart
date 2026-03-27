@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/review.dart';
 import '../../models/user.dart';
 import '../../models/booking_request.dart';
@@ -460,12 +461,19 @@ class ConvexAuthService implements AuthService {
   @override
   Future<User?> login(String email, String password) async {
     try {
-      final result = await _client.query('data:getUserByEmail', {
+      final result = await _client.mutation('authQueries:login', {
         'email': email,
         'password': password,
       });
       if (result == null) return null;
-      final user = User.fromJson(result as Map<String, dynamic>);
+      
+      final token = result['token'] as String;
+      final userMap = result['user'] as Map<String, dynamic>;
+      final user = User.fromJson(userMap);
+      
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('convex_auth_token', token);
+      
       _currentUser = user;
       return user;
     } catch (e) {
@@ -475,6 +483,14 @@ class ConvexAuthService implements AuthService {
 
   @override
   Future<void> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('convex_auth_token');
+      if (token != null) {
+        await _client.mutation('authQueries:logout', {'token': token});
+      }
+      await prefs.remove('convex_auth_token');
+    } catch (_) {}
     _currentUser = null;
   }
 

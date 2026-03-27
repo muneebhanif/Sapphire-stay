@@ -9,6 +9,7 @@
  */
 
 import type * as apiProxy from "../apiProxy.js";
+import type * as authQueries from "../authQueries.js";
 import type * as bookingRequests from "../bookingRequests.js";
 import type * as data from "../data.js";
 import type * as http from "../http.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   apiProxy: typeof apiProxy;
+  authQueries: typeof authQueries;
   bookingRequests: typeof bookingRequests;
   data: typeof data;
   http: typeof http;
