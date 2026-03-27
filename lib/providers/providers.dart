@@ -58,7 +58,18 @@ final siteConfigServiceProvider = Provider<ConvexSiteConfigService>((ref) =>
 class AuthNotifier extends StateNotifier<User?> {
   final AuthService _service;
 
-  AuthNotifier(this._service) : super(null);
+  AuthNotifier(this._service) : super(null) {
+    _initRestoreSession();
+  }
+
+  Future<void> _initRestoreSession() async {
+    try {
+      final user = await _service.getCurrentUser();
+      if (user != null) {
+        state = user;
+      }
+    } catch (_) {}
+  }
 
   Future<User?> login(String email, String password) async {
     final user = await _service.login(email, password);

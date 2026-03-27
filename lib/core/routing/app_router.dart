@@ -84,9 +84,37 @@ abstract final class RoutePaths {
 ///   2. ShellRoute enables persistent layouts (sidebar, nav bar) per module.
 ///   3. Redirect guards integrate cleanly with Riverpod auth state.
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authProvider);
+
   return GoRouter(
     initialLocation: RoutePaths.home,
     debugLogDiagnostics: true,
+    redirect: (context, state) {
+      final path = state.uri.path;
+      final isGoingToAdmin = path.startsWith('/admin');
+      final isGoingToStaff = path.startsWith('/staff');
+
+      if (isGoingToAdmin || isGoingToStaff) {
+        if (authState == null) {
+          return RoutePaths.login;
+        }
+
+        if (isGoingToAdmin && authState.role != 'admin') {
+          return RoutePaths.home;
+        }
+
+        if (isGoingToStaff && authState.role != 'staff' && authState.role != 'admin') {
+          return RoutePaths.home;
+        }
+      } else if (path == RoutePaths.login) {
+        if (authState != null) {
+          if (authState.role == 'admin') return RoutePaths.adminDashboard;
+          if (authState.role == 'staff') return RoutePaths.staffDashboard;
+          return RoutePaths.home;
+        }
+      }
+      return null;
+    },
 
     // ── Error page ──
     errorPageBuilder: (context, state) => MaterialPage(

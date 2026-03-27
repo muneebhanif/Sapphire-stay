@@ -90,6 +90,15 @@ export const getSessionUser = query({
     const user = await ctx.db.get(session.userId);
     if (!user || !user.isActive) return null;
 
-    return { role: user.role, id: user._id.toString() };
+    return {
+      id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      phone: user.phone || "",
+      role: user.role,
+      avatar_url: null,
+      created_at: new Date(user.createdAt).toISOString(),
+      is_active: user.isActive,
+    };
   },
 });

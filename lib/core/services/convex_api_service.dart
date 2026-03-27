@@ -495,7 +495,23 @@ class ConvexAuthService implements AuthService {
   }
 
   @override
-  Future<User?> getCurrentUser() async => _currentUser;
+  Future<User?> getCurrentUser() async {
+    if (_currentUser != null) return _currentUser;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('convex_auth_token');
+      if (token == null || token.isEmpty) return null;
+      
+      final result = await _client.query('authQueries:getSessionUser', {'token': token});
+      if (result == null) return null;
+      
+      final user = User.fromJson(Map<String, dynamic>.from(result as Map));
+      _currentUser = user;
+      return user;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class ConvexGalleryService {
