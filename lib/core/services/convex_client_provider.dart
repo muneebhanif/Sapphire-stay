@@ -29,15 +29,18 @@ class ConvexClient {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('convex_auth_token');
     
+    // Remove null values so Convex v.optional(...) doesn't crash on standard JSON nulls
+    final cleanArgs = Map<String, dynamic>.from(args)..removeWhere((k, v) => v == null);
+
     final response = await http.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer \$token',
+        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
         'path': path,
-        'args': args,
+        'args': cleanArgs,
         'isMutation': isMutation,
       }),
     );

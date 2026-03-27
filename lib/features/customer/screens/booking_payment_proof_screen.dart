@@ -76,10 +76,10 @@ class _BookingPaymentProofScreenState extends ConsumerState<BookingPaymentProofS
           bookingRequestId: widget.bookingRequestId,
           customerName: '', // filled by backend
           senderNumber: _senderController.text.trim(),
-          transactionId: _trxController.text.trim(),
+          transactionId: _trxController.text.trim().isEmpty ? null : _trxController.text.trim(),
           amountPkr: widget.amountPkr,
           screenshotUrl: storageId,
-          message: _msgController.text.trim(),
+          message: _msgController.text.trim().isEmpty ? null : _msgController.text.trim(),
           status: PaymentProofStatus.pending,
           createdAt: DateTime.now(),
         ),
@@ -149,7 +149,13 @@ class _BookingPaymentProofScreenState extends ConsumerState<BookingPaymentProofS
                   label: 'Sender Mobile Number',
                   hint: '03001234567',
                   controller: _senderController,
-                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                  keyboardType: TextInputType.phone,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Sender number is required';
+                    final cleanPhone = v.replaceAll(RegExp(r'\D'), '');
+                    if (cleanPhone.length < 10) return 'Enter a valid 11-digit number';
+                    return null;
+                  },
                 ),
                 const SizedBox(height: AppSpacing.md),
                 SSTextField(

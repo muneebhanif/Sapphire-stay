@@ -257,8 +257,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           controller: _phoneController,
           keyboardType: TextInputType.phone,
           prefixIcon: Icons.phone_outlined,
-          validator: (v) =>
-              v == null || v.isEmpty ? 'Phone number is required' : null,
+          validator: (v) {
+            if (v == null || v.isEmpty) return 'Phone number is required';
+            if (!RegExp(r'^[\d\+\-\(\) ]+$').hasMatch(v)) return 'Enter a valid phone number';
+            return null;
+          },
         ),
       ],
     );
@@ -483,9 +486,13 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 hint: '03XXXXXXXXX',
                 controller: _senderNumberController,
                 prefixIcon: Icons.phone_android,
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? 'Sender number is required'
-                    : null,
+                keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Sender number is required';
+                  final cleanPhone = v.replaceAll(RegExp(r'\D'), '');
+                  if (cleanPhone.length < 10) return 'Enter a valid 11-digit number';
+                  return null;
+                },
               ),
               const SizedBox(height: AppSpacing.md),
               SSTextField(
