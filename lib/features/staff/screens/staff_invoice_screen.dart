@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/ss_status_chip.dart';
 import '../../../core/widgets/ss_loading.dart';
 import '../../../core/widgets/ss_error_state.dart';
@@ -105,7 +106,7 @@ class StaffInvoiceScreen extends ConsumerWidget {
                           DataCell(Text(_fmtDate(inv.issueDate))),
                           DataCell(Text('${inv.lineItems.length}')),
                           DataCell(Text(
-                            '\$${inv.total.toStringAsFixed(2)}',
+                            CurrencyUtils.formatPkr(inv.total.round()),
                             style: AppTypography.bodySmall
                                 .copyWith(fontWeight: FontWeight.w600),
                           )),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_status_chip.dart';
 import '../../../core/widgets/ss_loading.dart';
@@ -95,7 +96,7 @@ class AdminPaymentScreen extends ConsumerWidget {
                         Text('Total Collected: ',
                             style: AppTypography.bodyMedium),
                         Text(
-                          '\$${totalAmount.toStringAsFixed(2)}',
+                          CurrencyUtils.formatPkr(totalAmount.round()),
                           style: AppTypography.titleMedium
                               .copyWith(color: AppColors.success),
                         ),
@@ -149,7 +150,7 @@ class AdminPaymentScreen extends ConsumerWidget {
                                 DataCell(Text(p.guestName)),
                                 DataCell(Text(_methodLabel(p.method.name))),
                                 DataCell(Text(
-                                  '\$${p.amount.toStringAsFixed(2)}',
+                                  CurrencyUtils.formatPkr(p.amount.round()),
                                   style: AppTypography.bodySmall.copyWith(
                                       fontWeight: FontWeight.w600),
                                 )),

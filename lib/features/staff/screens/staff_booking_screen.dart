@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_status_chip.dart';
 import '../../../core/widgets/ss_loading.dart';
@@ -162,7 +163,7 @@ class _StaffBookingScreenState extends ConsumerState<StaffBookingScreen>
                 DataCell(Text(_fmtDate(b.checkIn))),
                 DataCell(Text(_fmtDate(b.checkOut))),
                 DataCell(Text('${b.nights}')),
-                DataCell(Text('\$${b.totalAmount.toStringAsFixed(2)}')),
+                DataCell(Text(CurrencyUtils.formatPkr(b.totalAmount.round()))),
                 DataCell(SSStatusChip.fromString(b.status.name)),
                 DataCell(
                   PopupMenuButton<String>(

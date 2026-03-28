@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_status_chip.dart';
 import '../../../core/widgets/ss_loading.dart';
@@ -107,12 +108,12 @@ class AdminInvoiceScreen extends ConsumerWidget {
                           DataCell(Text(inv.dueDate != null ? _fmtDate(inv.dueDate!) : '—')),
                           DataCell(Text('${inv.lineItems.length}')),
                           DataCell(Text(
-                            '\$${inv.total.toStringAsFixed(2)}',
+                            CurrencyUtils.formatPkr(inv.total.round()),
                             style: AppTypography.bodySmall
                                 .copyWith(fontWeight: FontWeight.w600),
                           )),
                           DataCell(
-                              Text('\$${inv.tax.toStringAsFixed(2)}')),
+                              Text(CurrencyUtils.formatPkr(inv.tax.round()))),
                           DataCell(SSStatusChip.fromString(inv.status.name)),
                           DataCell(
                             PopupMenuButton<String>(

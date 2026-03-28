@@ -35,9 +35,6 @@ import '../../features/staff/widgets/staff_shell.dart';
 import '../../providers/providers.dart';
 
 /// Centralized route path constants.
-///
-/// Grouping paths here prevents typo bugs and gives IDE
-/// autocompletion when navigating.
 abstract final class RoutePaths {
   // ── Customer ──
   static const String home = '/';
@@ -78,23 +75,40 @@ abstract final class RoutePaths {
   static const String adminStaff = '/admin/staff';
 }
 
-/// GoRouter provider — reactive to auth state changes.
+/// A [Listenable] that notifies whenever the auth state changes.
 ///
-/// Using [GoRouter] because:
-///   1. Declarative, URL-based routing ideal for web (deep linking, browser back button).
-///   2. ShellRoute enables persistent layouts (sidebar, nav bar) per module.
-///   3. Redirect guards integrate cleanly with Riverpod auth state.
+/// GoRouter uses this to re-evaluate its redirect callback
+/// WITHOUT recreating the entire router instance. This is the
+/// key fix: we use `refreshListenable` instead of recreating
+/// the GoRouter on every auth state change.
+class _AuthChangeNotifier extends ChangeNotifier {
+  _AuthChangeNotifier(Ref ref) {
+    ref.listen(authProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+}
+
+/// GoRouter provider — persists across auth state changes.
+///
+/// The router is created ONCE and uses [refreshListenable] to
+/// re-run the redirect guard when auth state changes. This prevents
+/// the URL from resetting to '/' after login.
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authNotifier = _AuthChangeNotifier(ref);
 
   return GoRouter(
     initialLocation: RoutePaths.home,
     debugLogDiagnostics: true,
+    refreshListenable: authNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final path = state.uri.path;
       final isGoingToAdmin = path.startsWith('/admin');
       final isGoingToStaff = path.startsWith('/staff');
+      final isGoingToLogin = path == RoutePaths.login;
 
+      // --- Protected routes ---
       if (isGoingToAdmin || isGoingToStaff) {
         if (authState == null) {
           return RoutePaths.login;
@@ -104,17 +118,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return RoutePaths.home;
         }
 
-        if (isGoingToStaff && authState.role.name != 'staff' && authState.role.name != 'admin') {
-          return RoutePaths.home;
-        }
-      } else if (path == RoutePaths.login) {
-        if (authState != null) {
-          if (authState.role.name == 'admin') return RoutePaths.adminDashboard;
-          if (authState.role.name == 'staff') return RoutePaths.staffDashboard;
+        if (isGoingToStaff &&
+            authState.role.name != 'staff' &&
+            authState.role.name != 'admin') {
           return RoutePaths.home;
         }
       }
-      return null;
+
+      // --- Already logged in? Redirect away from login ---
+      if (isGoingToLogin && authState != null) {
+        if (authState.role.name == 'admin') return RoutePaths.adminDashboard;
+        if (authState.role.name == 'staff') return RoutePaths.staffDashboard;
+        return RoutePaths.home;
+      }
+
+      return null; // no redirect
     },
 
     // ── Error page ──

@@ -19,14 +19,18 @@ class ConvexBookingRequestService implements BookingRequestService {
 
   @override
   Future<BookingRequest> createBookingRequest(BookingRequest request) async {
-    final userRefs = await _client.query('users:getFirstUsers');
-    final customerId = (userRefs as Map)['customerId'];
-    final roomId = (userRefs)['roomId']; // using hardcoded room for demo if request logic fails
-    final effectiveRoomId = request.roomId.isNotEmpty ? request.roomId : (roomId as String);
+    // Create a guest user for this customer (or re-use existing).
+    // The backend will use the customerId from the guest lookup.
+    final guestResult = await _client.mutation('data:createGuest', {
+      'name': request.customerName,
+      'email': request.customerEmail,
+      'phone': request.customerPhone,
+    });
+    final customerId = guestResult.toString();
 
     final id = await _client.mutation('bookingRequests:createBookingRequest', {
       'customerId': customerId,
-      'roomId': effectiveRoomId,
+      'roomId': request.roomId.isNotEmpty ? request.roomId : null,
       'checkIn': request.checkIn.millisecondsSinceEpoch,
       'checkOut': request.checkOut.millisecondsSinceEpoch,
       'guestsCount': request.guestsCount,
@@ -95,8 +99,23 @@ class ConvexPaymentProofService implements PaymentProofService {
 
   @override
   Future<PaymentProof> submitPaymentProof(PaymentProof proof) async {
-    final userRefs = await _client.query('users:getFirstUsers');
-    final customerId = (userRefs as Map)['customerId'];
+    // Look up the booking request to get the customerId
+    // The booking request already has the customerId stored on the backend.
+    // We need to pass the bookingRequestId, and the backend will resolve it.
+    
+    // Get the booking request to find the customerId
+    final allRequests = await _client.query('bookingRequests:getAllBookingRequests');
+    final requests = allRequests as List;
+    final matchingRequest = requests.firstWhere(
+      (r) => (r as Map)['_id'] == proof.bookingRequestId,
+      orElse: () => null,
+    );
+    
+    if (matchingRequest == null) {
+      throw Exception('Booking request not found: ${proof.bookingRequestId}');
+    }
+    
+    final customerId = (matchingRequest as Map)['customerId'] as String;
 
     final proofId = await _client.mutation('bookingRequests:submitPaymentProof', {
       'bookingRequestId': proof.bookingRequestId,
@@ -136,8 +155,21 @@ class ConvexPaymentProofService implements PaymentProofService {
 
   @override
   Future<PaymentProof> reviewPaymentProof(String proofId, {required bool approved, required String staffName, String? rejectionReason}) async {
-    final userRefs = await _client.query('users:getFirstUsers');
-    final staffId = (userRefs as Map)['staffId'];
+    // Get the logged-in staff user's ID from the session
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('convex_auth_token');
+    
+    String staffId;
+    if (token != null && token.isNotEmpty) {
+      final sessionUser = await _client.query('authQueries:getSessionUser', {'token': token});
+      if (sessionUser != null) {
+        staffId = (sessionUser as Map)['id'] as String;
+      } else {
+        throw Exception('Not authenticated — cannot review payment proof');
+      }
+    } else {
+      throw Exception('Not authenticated — cannot review payment proof');
+    }
 
     await _client.mutation('bookingRequests:reviewPaymentProof', {
       'proofId': proofId,
@@ -276,13 +308,37 @@ class ConvexBookingService implements BookingService {
   }
 
   @override
-  Future<List<Booking>> getBookingsByDate(DateTime date) async => [];
+  Future<List<Booking>> getBookingsByDate(DateTime date) async {
+    final all = await getAllBookings();
+    return all.where((b) {
+      final d = DateTime(date.year, date.month, date.day);
+      final checkIn = DateTime(b.checkIn.year, b.checkIn.month, b.checkIn.day);
+      final checkOut = DateTime(b.checkOut.year, b.checkOut.month, b.checkOut.day);
+      return !d.isBefore(checkIn) && d.isBefore(checkOut);
+    }).toList();
+  }
 
   @override
-  Future<List<Booking>> getTodayCheckIns() async => [];
+  Future<List<Booking>> getTodayCheckIns() async {
+    final all = await getAllBookings();
+    final today = DateTime.now();
+    return all.where((b) {
+      return b.checkIn.year == today.year &&
+          b.checkIn.month == today.month &&
+          b.checkIn.day == today.day;
+    }).toList();
+  }
 
   @override
-  Future<List<Booking>> getTodayCheckOuts() async => [];
+  Future<List<Booking>> getTodayCheckOuts() async {
+    final all = await getAllBookings();
+    final today = DateTime.now();
+    return all.where((b) {
+      return b.checkOut.year == today.year &&
+          b.checkOut.month == today.month &&
+          b.checkOut.day == today.day;
+    }).toList();
+  }
 }
 
 class ConvexGuestService implements GuestService {

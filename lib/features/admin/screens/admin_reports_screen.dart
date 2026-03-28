@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_stat_card.dart';
 import '../../../core/widgets/ss_loading.dart';
@@ -113,7 +114,7 @@ class AdminReportsScreen extends ConsumerWidget {
                         payments.fold<double>(0, (s, p) => s + p.amount);
                     return SSStatCard(
                       title: 'Total Revenue',
-                      value: '\$${total.toStringAsFixed(0)}',
+                      value: CurrencyUtils.formatPkr(total.round()),
                       icon: Icons.attach_money,
                       color: AppColors.success,
                     );

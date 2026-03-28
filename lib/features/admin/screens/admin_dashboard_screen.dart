@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_stat_card.dart';
 import '../../../core/widgets/ss_status_chip.dart';
@@ -71,7 +72,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                   final total = payments.fold<double>(0, (s, p) => s + p.amount);
                   return SSStatCard(
                     title: 'Revenue',
-                    value: '\$${total.toStringAsFixed(0)}',
+                    value: CurrencyUtils.formatPkr(total.round()),
                     icon: Icons.attach_money,
                     color: AppColors.warning,
                   );
@@ -142,7 +143,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                         DataCell(Text(b.roomNumber)),
                         DataCell(Text(_fmtDate(b.checkIn))),
                         DataCell(Text(_fmtDate(b.checkOut))),
-                        DataCell(Text('\$${b.totalAmount.toStringAsFixed(2)}')),
+                        DataCell(Text(CurrencyUtils.formatPkr(b.totalAmount.round()))),
                         DataCell(SSStatusChip.fromString(b.status.name)),
                       ]);
                     }).toList(),

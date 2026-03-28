@@ -57,10 +57,14 @@ final siteConfigServiceProvider = Provider<ConvexSiteConfigService>((ref) =>
 /// Navigation guards and role-based UI observe this provider.
 class AuthNotifier extends StateNotifier<User?> {
   final AuthService _service;
+  bool _initialized = false;
 
   AuthNotifier(this._service) : super(null) {
     _initRestoreSession();
   }
+
+  /// Whether the initial session restore has completed.
+  bool get initialized => _initialized;
 
   Future<void> _initRestoreSession() async {
     try {
@@ -68,7 +72,10 @@ class AuthNotifier extends StateNotifier<User?> {
       if (user != null) {
         state = user;
       }
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _initialized = true;
+    }
   }
 
   Future<User?> login(String email, String password) async {
@@ -200,7 +207,6 @@ final siteConfigProvider = FutureProvider<Map<String, String>>((ref) {
 });
 
 /// ─── Convenience aliases (used in screens) ────────────────────────
-/// These keep screen code concise while maintaining backward compat.
 final roomsProvider = allRoomsProvider;
 final bookingsProvider = allBookingsProvider;
 final guestsProvider = allGuestsProvider;

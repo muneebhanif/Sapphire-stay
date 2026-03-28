@@ -23,16 +23,16 @@ class ConvexStorageService {
         final data = jsonDecode(response.body);
         return data['storageId'] as String?;
       } else {
-        debugPrint('Upload failed with status: \${response.statusCode}');
+        debugPrint('Upload failed with status: ${response.statusCode}');
         return null;
       }
     } catch (e) {
-      debugPrint('Error uploading image: \$e');
+      debugPrint('Error uploading image: $e');
       return null;
     }
   }
 
   String getImageUrl(String storageId) {
-    return '\${ConvexEnv.httpUrl}/getImage?storageId=\$storageId';
+    return '${ConvexEnv.httpUrl}/getImage?storageId=$storageId';
   }
 }

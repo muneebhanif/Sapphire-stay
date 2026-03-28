@@ -131,7 +131,7 @@ class StaffPaymentScreen extends ConsumerWidget {
                             ),
                           ),
                           DataCell(Text(
-                            '\$${p.amount.toStringAsFixed(2)}',
+                            CurrencyUtils.formatPkr(p.amount.round()),
                             style: AppTypography.bodySmall
                                 .copyWith(fontWeight: FontWeight.w600),
                           )),

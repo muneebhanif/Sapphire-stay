@@ -36,11 +36,14 @@ export const callEndpoint = httpAction(async (ctx, request) => {
     }
 
     // Role-Based Access Control (RBAC) mapping
+    // Endpoints requiring admin or staff authentication.
+    // NOTE: data:createGuest, bookingRequests:createBookingRequest, and
+    // bookingRequests:submitPaymentProof are intentionally NOT restricted,
+    // because unauthenticated customers use them during the booking flow.
     const adminStaffRestricted = new Set([
       "data:createRoom",
       "data:updateRoom",
       "data:deleteRoom",
-      "data:createGuest",
       "data:updateGuest",
       "data:deleteGuest",
       "data:createStaff",

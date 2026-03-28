@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_status_chip.dart';
@@ -154,7 +155,7 @@ class StaffCheckinCheckoutScreen extends ConsumerWidget {
                     _infoRow('Check-In', _fmtDate(b.checkIn)),
                     _infoRow('Check-Out', _fmtDate(b.checkOut)),
                     _infoRow('Nights', '${b.nights}'),
-                    _infoRow('Total', '\$${b.totalAmount.toStringAsFixed(2)}'),
+                    _infoRow('Total', CurrencyUtils.formatPkr(b.totalAmount.round())),
                     const SizedBox(height: AppSpacing.md),
                     SSButton(
                       label: actionLabel,
