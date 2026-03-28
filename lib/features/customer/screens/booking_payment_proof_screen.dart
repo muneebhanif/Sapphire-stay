@@ -17,11 +17,13 @@ import '../../../core/services/convex_storage_service.dart';
 class BookingPaymentProofScreen extends ConsumerStatefulWidget {
   final String bookingRequestId;
   final int amountPkr;
+  final String customerId;
 
   const BookingPaymentProofScreen({
     super.key,
     required this.bookingRequestId,
     required this.amountPkr,
+    required this.customerId,
   });
 
   @override
@@ -69,12 +71,15 @@ class _BookingPaymentProofScreenState extends ConsumerState<BookingPaymentProofS
         throw Exception('Failed to upload image to Convex storage');
       }
 
+      debugPrint('[PaymentProofScreen] Image uploaded: $storageId');
+
       final proofService = ref.read(paymentProofServiceProvider);
       await proofService.submitPaymentProof(
         PaymentProof(
           id: '',
           bookingRequestId: widget.bookingRequestId,
-          customerName: '', // filled by backend
+          customerName: '',
+          customerId: widget.customerId,
           senderNumber: _senderController.text.trim(),
           transactionId: _trxController.text.trim().isEmpty ? null : _trxController.text.trim(),
           amountPkr: widget.amountPkr,
@@ -85,10 +90,13 @@ class _BookingPaymentProofScreenState extends ConsumerState<BookingPaymentProofS
         ),
       );
 
+      debugPrint('[PaymentProofScreen] Payment proof submitted successfully');
+
       if (mounted) {
         context.go(RoutePaths.bookingConfirmation);
       }
     } catch (e) {
+      debugPrint('[PaymentProofScreen] ERROR: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error submitting payment: $e')),

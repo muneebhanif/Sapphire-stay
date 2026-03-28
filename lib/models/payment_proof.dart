@@ -15,6 +15,11 @@ class PaymentProof extends Equatable {
   final DateTime createdAt;
   final String? reviewedBy;
 
+  /// The Convex user ID of the customer.
+  /// Required when submitting a new proof so the backend knows
+  /// which customer to associate the payment with.
+  final String? customerId;
+
   const PaymentProof({
     required this.id,
     required this.bookingRequestId,
@@ -27,6 +32,7 @@ class PaymentProof extends Equatable {
     required this.status,
     required this.createdAt,
     this.reviewedBy,
+    this.customerId,
   });
 
   @override

@@ -208,6 +208,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 child: BookingPaymentProofScreen(
                   bookingRequestId: extra['bookingRequestId'] as String? ?? '',
                   amountPkr: extra['amountPkr'] as int? ?? 0,
+                  customerId: extra['customerId'] as String? ?? '',
                 ),
               );
             },

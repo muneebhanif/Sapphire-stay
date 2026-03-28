@@ -23,6 +23,11 @@ class BookingRequest extends Equatable {
   final String? notes;
   final DateTime createdAt;
 
+  /// The Convex user ID of the customer who created this booking request.
+  /// This is needed so we can pass it to submitPaymentProof without
+  /// calling the admin-restricted getAllBookingRequests endpoint.
+  final String? customerId;
+
   const BookingRequest({
     required this.id,
     required this.customerName,
@@ -37,6 +42,7 @@ class BookingRequest extends Equatable {
     required this.status,
     this.notes,
     required this.createdAt,
+    this.customerId,
   });
 
   @override

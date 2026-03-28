@@ -597,12 +597,12 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     final rooms = await ref.read(allRoomsProvider.future);
     final selectedRoom = rooms.firstWhere((r) => r.id == _selectedRoomId);
     final nights = _checkOut!.difference(_checkIn!).inDays;
-    final totalUsd = selectedRoom.pricePerNight * nights;
-    final totalPkr = totalUsd.round();
+    final totalPkr = (selectedRoom.pricePerNight * nights).round();
 
     setState(() => _isSubmitting = true);
 
     try {
+      // Step 1: Create booking request (also creates guest user)
       final bookingRequest = BookingRequest(
         id: 'br-${DateTime.now().millisecondsSinceEpoch}',
         customerName: _nameController.text.trim(),
@@ -625,17 +625,25 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           .read(bookingRequestServiceProvider)
           .createBookingRequest(bookingRequest);
 
+      debugPrint('[BookingScreen] Booking request created: ${created.id}, customerId: ${created.customerId}');
+
+      // Step 2: Upload the Easypaisa screenshot
       final storageService = ref.read(convexStorageServiceProvider);
       final storageId = await storageService.uploadImage(_imageBytes!, _mimeType!);
       
       if (storageId == null) {
-        throw Exception('Failed to upload image to server');
+        throw Exception('Failed to upload payment screenshot');
       }
 
+      debugPrint('[BookingScreen] Image uploaded: $storageId');
+
+      // Step 3: Submit payment proof — pass customerId so we avoid
+      //         calling the admin-restricted getAllBookingRequests.
       final proof = PaymentProof(
         id: '',
         bookingRequestId: created.id,
         customerName: _nameController.text.trim(),
+        customerId: created.customerId,
         senderNumber: _senderNumberController.text.trim(),
         transactionId: _transactionIdController.text.trim().isEmpty
             ? null
@@ -651,13 +659,16 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
       await ref.read(paymentProofServiceProvider).submitPaymentProof(proof);
 
+      debugPrint('[BookingScreen] Payment proof submitted successfully');
+
       ref.invalidate(allBookingRequestsProvider);
       ref.invalidate(allPaymentProofsProvider);
       ref.invalidate(pendingPaymentProofsProvider);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[BookingScreen] ERROR: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to submit payment proof.')),
+          SnackBar(content: Text('Failed to submit: $e')),
         );
       }
       setState(() => _isSubmitting = false);

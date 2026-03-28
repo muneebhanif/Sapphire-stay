@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../models/review.dart';
 import '../../models/user.dart';
@@ -12,6 +13,10 @@ import '../../services/api/api_service.dart';
 import 'convex_client_provider.dart';
 import 'convex_storage_service.dart';
 
+// ─────────────────────────────────────────────────────────────
+// BOOKING REQUEST SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexBookingRequestService implements BookingRequestService {
   final ConvexClient _client;
 
@@ -19,15 +24,24 @@ class ConvexBookingRequestService implements BookingRequestService {
 
   @override
   Future<BookingRequest> createBookingRequest(BookingRequest request) async {
-    // Create a guest user for this customer (or re-use existing).
-    // The backend will use the customerId from the guest lookup.
+    // Step 1: Create (or find) a guest user so we get a customerId.
+    //         data:createGuest is publicly accessible (no auth required).
     final guestResult = await _client.mutation('data:createGuest', {
       'name': request.customerName,
       'email': request.customerEmail,
       'phone': request.customerPhone,
     });
-    final customerId = guestResult.toString();
 
+    // The mutation returns the Convex ID as a JSON string.
+    // Convex ID strings may be quoted → strip outer quotes if present.
+    String customerId = guestResult.toString();
+    if (customerId.startsWith('"') && customerId.endsWith('"')) {
+      customerId = customerId.substring(1, customerId.length - 1);
+    }
+
+    debugPrint('[BookingRequest] customerId = $customerId');
+
+    // Step 2: Create the booking request itself.
     final id = await _client.mutation('bookingRequests:createBookingRequest', {
       'customerId': customerId,
       'roomId': request.roomId.isNotEmpty ? request.roomId : null,
@@ -37,9 +51,16 @@ class ConvexBookingRequestService implements BookingRequestService {
       'requestedTotalPkr': request.requestedTotalPkr,
       'notes': request.notes,
     });
-    
+
+    String requestId = id.toString();
+    if (requestId.startsWith('"') && requestId.endsWith('"')) {
+      requestId = requestId.substring(1, requestId.length - 1);
+    }
+
+    debugPrint('[BookingRequest] requestId = $requestId');
+
     return BookingRequest(
-      id: id.toString(),
+      id: requestId,
       customerName: request.customerName,
       customerEmail: request.customerEmail,
       customerPhone: request.customerPhone,
@@ -52,13 +73,18 @@ class ConvexBookingRequestService implements BookingRequestService {
       status: BookingRequestStatus.pendingPayment,
       notes: request.notes,
       createdAt: DateTime.now(),
+      // Store customerId so submitPaymentProof can use it without
+      // calling the admin-restricted getAllBookingRequests endpoint.
+      customerId: customerId,
     );
   }
 
   @override
   Future<List<BookingRequest>> getAllBookingRequests() async {
     final results = await _client.query('bookingRequests:getAllBookingRequests');
-    return (results as List).map((r) => _mapToBookingRequest(r as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((r) => _mapToBookingRequest(r as Map<String, dynamic>))
+        .toList();
   }
 
   BookingRequest _mapToBookingRequest(Map<String, dynamic> data) {
@@ -75,21 +101,33 @@ class ConvexBookingRequestService implements BookingRequestService {
       requestedTotalPkr: data['requestedTotalPkr'] as int,
       status: _mapStatus(data['status'] as String),
       notes: data['notes'] as String?,
-      createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt'] as int),
+      createdAt:
+          DateTime.fromMillisecondsSinceEpoch(data['createdAt'] as int),
+      customerId: data['customerId'] as String?,
     );
   }
 
   BookingRequestStatus _mapStatus(String status) {
     switch (status) {
-      case 'pending_payment': return BookingRequestStatus.pendingPayment;
-      case 'payment_submitted': return BookingRequestStatus.paymentSubmitted;
-      case 'verified': return BookingRequestStatus.verified;
-      case 'rejected': return BookingRequestStatus.rejected;
-      case 'expired': return BookingRequestStatus.expired;
-      default: return BookingRequestStatus.pendingPayment;
+      case 'pending_payment':
+        return BookingRequestStatus.pendingPayment;
+      case 'payment_submitted':
+        return BookingRequestStatus.paymentSubmitted;
+      case 'verified':
+        return BookingRequestStatus.verified;
+      case 'rejected':
+        return BookingRequestStatus.rejected;
+      case 'expired':
+        return BookingRequestStatus.expired;
+      default:
+        return BookingRequestStatus.pendingPayment;
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// PAYMENT PROOF SERVICE
+// ─────────────────────────────────────────────────────────────
 
 class ConvexPaymentProofService implements PaymentProofService {
   final ConvexClient _client;
@@ -99,34 +137,30 @@ class ConvexPaymentProofService implements PaymentProofService {
 
   @override
   Future<PaymentProof> submitPaymentProof(PaymentProof proof) async {
-    // Look up the booking request to get the customerId
-    // The booking request already has the customerId stored on the backend.
-    // We need to pass the bookingRequestId, and the backend will resolve it.
-    
-    // Get the booking request to find the customerId
-    final allRequests = await _client.query('bookingRequests:getAllBookingRequests');
-    final requests = allRequests as List;
-    final matchingRequest = requests.firstWhere(
-      (r) => (r as Map)['_id'] == proof.bookingRequestId,
-      orElse: () => null,
-    );
-    
-    if (matchingRequest == null) {
-      throw Exception('Booking request not found: ${proof.bookingRequestId}');
+    // The customerId is now passed from the frontend via proof.customerId
+    // so we don't need the admin-restricted getAllBookingRequests call.
+    final customerId = proof.customerId;
+    if (customerId == null || customerId.isEmpty) {
+      throw Exception(
+          'Customer ID is required for payment proof submission.');
     }
-    
-    final customerId = (matchingRequest as Map)['customerId'] as String;
 
-    final proofId = await _client.mutation('bookingRequests:submitPaymentProof', {
+    debugPrint(
+        '[PaymentProof] submitting for bookingRequestId=${proof.bookingRequestId}, customerId=$customerId');
+
+    final proofId =
+        await _client.mutation('bookingRequests:submitPaymentProof', {
       'bookingRequestId': proof.bookingRequestId,
       'customerId': customerId,
       'senderNumber': proof.senderNumber,
       'transactionId': proof.transactionId,
       'amountPkr': proof.amountPkr,
-      'screenshotStorageId': proof.screenshotUrl, 
+      'screenshotStorageId': proof.screenshotUrl,
       'message': proof.message,
     });
-    
+
+    debugPrint('[PaymentProof] proofId = $proofId');
+
     return PaymentProof(
       id: proofId.toString(),
       bookingRequestId: proof.bookingRequestId,
@@ -144,32 +178,41 @@ class ConvexPaymentProofService implements PaymentProofService {
   @override
   Future<List<PaymentProof>> getAllPaymentProofs() async {
     final results = await _client.query('bookingRequests:getAllPaymentProofs');
-    return (results as List).map((p) => _mapToPaymentProof(p as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((p) => _mapToPaymentProof(p as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<List<PaymentProof>> getPendingPaymentProofs() async {
-    final results = await _client.query('bookingRequests:getPendingPaymentProofs');
-    return (results as List).map((p) => _mapToPaymentProof(p as Map<String, dynamic>)).toList();
+    final results =
+        await _client.query('bookingRequests:getPendingPaymentProofs');
+    return (results as List)
+        .map((p) => _mapToPaymentProof(p as Map<String, dynamic>))
+        .toList();
   }
 
   @override
-  Future<PaymentProof> reviewPaymentProof(String proofId, {required bool approved, required String staffName, String? rejectionReason}) async {
+  Future<PaymentProof> reviewPaymentProof(
+    String proofId, {
+    required bool approved,
+    required String staffName,
+    String? rejectionReason,
+  }) async {
     // Get the logged-in staff user's ID from the session
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('convex_auth_token');
-    
-    String staffId;
-    if (token != null && token.isNotEmpty) {
-      final sessionUser = await _client.query('authQueries:getSessionUser', {'token': token});
-      if (sessionUser != null) {
-        staffId = (sessionUser as Map)['id'] as String;
-      } else {
-        throw Exception('Not authenticated — cannot review payment proof');
-      }
-    } else {
+
+    if (token == null || token.isEmpty) {
       throw Exception('Not authenticated — cannot review payment proof');
     }
+
+    final sessionUser = await _client
+        .query('authQueries:getSessionUser', {'token': token});
+    if (sessionUser == null) {
+      throw Exception('Not authenticated — cannot review payment proof');
+    }
+    final staffId = (sessionUser as Map)['id'] as String;
 
     await _client.mutation('bookingRequests:reviewPaymentProof', {
       'proofId': proofId,
@@ -177,7 +220,7 @@ class ConvexPaymentProofService implements PaymentProofService {
       'action': approved ? 'approve' : 'reject',
       'rejectionReason': rejectionReason,
     });
-    
+
     return PaymentProof(
       id: proofId,
       bookingRequestId: '',
@@ -185,7 +228,9 @@ class ConvexPaymentProofService implements PaymentProofService {
       senderNumber: '',
       amountPkr: 0,
       screenshotUrl: '',
-      status: approved ? PaymentProofStatus.approved : PaymentProofStatus.rejected,
+      status: approved
+          ? PaymentProofStatus.approved
+          : PaymentProofStatus.rejected,
       createdAt: DateTime.now(),
       reviewedBy: staffName,
     );
@@ -199,23 +244,33 @@ class ConvexPaymentProofService implements PaymentProofService {
       senderNumber: data['senderNumber'] as String,
       transactionId: data['transactionId'] as String?,
       amountPkr: data['amountPkr'] as int,
-      screenshotUrl: _storageService.getImageUrl(data['screenshotStorageId'] as String),
+      screenshotUrl:
+          _storageService.getImageUrl(data['screenshotStorageId'] as String),
       message: data['message'] as String?,
-      status: _mapVerificationStatus(data['verificationStatus'] as String),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(data['createdAt'] as int),
+      status:
+          _mapVerificationStatus(data['verificationStatus'] as String),
+      createdAt:
+          DateTime.fromMillisecondsSinceEpoch(data['createdAt'] as int),
       reviewedBy: data['reviewedByName'] as String?,
     );
   }
 
   PaymentProofStatus _mapVerificationStatus(String status) {
     switch (status) {
-      case 'approved': return PaymentProofStatus.approved;
-      case 'rejected': return PaymentProofStatus.rejected;
+      case 'approved':
+        return PaymentProofStatus.approved;
+      case 'rejected':
+        return PaymentProofStatus.rejected;
       case 'pending':
-      default: return PaymentProofStatus.pending;
+      default:
+        return PaymentProofStatus.pending;
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// ROOM SERVICE
+// ─────────────────────────────────────────────────────────────
 
 class ConvexRoomService implements RoomService {
   final ConvexClient _client;
@@ -224,7 +279,9 @@ class ConvexRoomService implements RoomService {
   @override
   Future<List<Room>> getAllRooms() async {
     final results = await _client.query('data:getAllRooms');
-    return (results as List).map((r) => Room.fromJson(r as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((r) => Room.fromJson(r as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -236,11 +293,14 @@ class ConvexRoomService implements RoomService {
   @override
   Future<List<Room>> getFeaturedRooms() async {
     final results = await _client.query('data:getFeaturedRooms');
-    return (results as List).map((r) => Room.fromJson(r as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((r) => Room.fromJson(r as Map<String, dynamic>))
+        .toList();
   }
 
   @override
-  Future<List<Room>> checkAvailability(DateTime checkIn, DateTime checkOut) async {
+  Future<List<Room>> checkAvailability(
+      DateTime checkIn, DateTime checkOut) async {
     final rooms = await getAllRooms();
     return rooms.where((r) => r.status == RoomStatus.available).toList();
   }
@@ -282,6 +342,10 @@ class ConvexRoomService implements RoomService {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// BOOKING SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexBookingService implements BookingService {
   final ConvexClient _client;
   ConvexBookingService(this._client);
@@ -289,7 +353,9 @@ class ConvexBookingService implements BookingService {
   @override
   Future<List<Booking>> getAllBookings() async {
     final results = await _client.query('data:getAllBookings');
-    return (results as List).map((b) => Booking.fromJson(b as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((b) => Booking.fromJson(b as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -302,7 +368,8 @@ class ConvexBookingService implements BookingService {
   Future<Booking> createBooking(Booking booking) async => booking;
 
   @override
-  Future<Booking> updateBookingStatus(String id, BookingStatus status) async {
+  Future<Booking> updateBookingStatus(
+      String id, BookingStatus status) async {
     final all = await getAllBookings();
     return all.firstWhere((b) => b.id == id);
   }
@@ -312,8 +379,10 @@ class ConvexBookingService implements BookingService {
     final all = await getAllBookings();
     return all.where((b) {
       final d = DateTime(date.year, date.month, date.day);
-      final checkIn = DateTime(b.checkIn.year, b.checkIn.month, b.checkIn.day);
-      final checkOut = DateTime(b.checkOut.year, b.checkOut.month, b.checkOut.day);
+      final checkIn =
+          DateTime(b.checkIn.year, b.checkIn.month, b.checkIn.day);
+      final checkOut =
+          DateTime(b.checkOut.year, b.checkOut.month, b.checkOut.day);
       return !d.isBefore(checkIn) && d.isBefore(checkOut);
     }).toList();
   }
@@ -341,6 +410,10 @@ class ConvexBookingService implements BookingService {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// GUEST SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexGuestService implements GuestService {
   final ConvexClient _client;
   ConvexGuestService(this._client);
@@ -348,7 +421,9 @@ class ConvexGuestService implements GuestService {
   @override
   Future<List<Guest>> getAllGuests() async {
     final results = await _client.query('data:getAllGuests');
-    return (results as List).map((g) => Guest.fromJson(g as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((g) => Guest.fromJson(g as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -374,6 +449,10 @@ class ConvexGuestService implements GuestService {
   Future<void> deleteGuest(String id) async {}
 }
 
+// ─────────────────────────────────────────────────────────────
+// INVOICE SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexInvoiceService implements InvoiceService {
   final ConvexClient _client;
   ConvexInvoiceService(this._client);
@@ -381,7 +460,9 @@ class ConvexInvoiceService implements InvoiceService {
   @override
   Future<List<Invoice>> getAllInvoices() async {
     final results = await _client.query('data:getAllInvoices');
-    return (results as List).map((i) => Invoice.fromJson(i as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((i) => Invoice.fromJson(i as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -394,7 +475,8 @@ class ConvexInvoiceService implements InvoiceService {
   Future<Invoice> createInvoice(Invoice invoice) async => invoice;
 
   @override
-  Future<Invoice> updateInvoiceStatus(String id, InvoiceStatus status) async {
+  Future<Invoice> updateInvoiceStatus(
+      String id, InvoiceStatus status) async {
     final all = await getAllInvoices();
     return all.firstWhere((i) => i.id == id);
   }
@@ -406,6 +488,10 @@ class ConvexInvoiceService implements InvoiceService {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// PAYMENT SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexPaymentService implements PaymentService {
   final ConvexClient _client;
   ConvexPaymentService(this._client);
@@ -413,7 +499,9 @@ class ConvexPaymentService implements PaymentService {
   @override
   Future<List<Payment>> getAllPayments() async {
     final results = await _client.query('data:getAllPayments');
-    return (results as List).map((p) => Payment.fromJson(p as Map<String, dynamic>)).toList();
+    return (results as List)
+        .map((p) => Payment.fromJson(p as Map<String, dynamic>))
+        .toList();
   }
 
   @override
@@ -431,6 +519,10 @@ class ConvexPaymentService implements PaymentService {
     return (result as num).toDouble();
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// REVIEW SERVICE
+// ─────────────────────────────────────────────────────────────
 
 class ConvexReviewService implements ReviewService {
   final ConvexClient _client;
@@ -453,6 +545,10 @@ class ConvexReviewService implements ReviewService {
     return (result as num).toDouble();
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// STAFF MANAGEMENT SERVICE
+// ─────────────────────────────────────────────────────────────
 
 class ConvexStaffManagementService implements StaffManagementService {
   final ConvexClient _client;
@@ -485,28 +581,40 @@ class ConvexStaffManagementService implements StaffManagementService {
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// REPORT SERVICE
+// ─────────────────────────────────────────────────────────────
+
 class ConvexReportService implements ReportService {
   final ConvexClient _client;
   ConvexReportService(this._client);
 
   @override
-  Future<Map<String, dynamic>> getBookingReport(DateTime from, DateTime to) async {
+  Future<Map<String, dynamic>> getBookingReport(
+      DateTime from, DateTime to) async {
     final result = await _client.query('data:getReports');
     return Map<String, dynamic>.from((result as Map)['booking'] as Map);
   }
 
   @override
-  Future<Map<String, dynamic>> getOccupancyReport(DateTime from, DateTime to) async {
+  Future<Map<String, dynamic>> getOccupancyReport(
+      DateTime from, DateTime to) async {
     final result = await _client.query('data:getReports');
-    return Map<String, dynamic>.from((result as Map)['occupancy'] as Map);
+    return Map<String, dynamic>.from(
+        (result as Map)['occupancy'] as Map);
   }
 
   @override
-  Future<Map<String, dynamic>> getRevenueReport(DateTime from, DateTime to) async {
+  Future<Map<String, dynamic>> getRevenueReport(
+      DateTime from, DateTime to) async {
     final result = await _client.query('data:getReports');
     return Map<String, dynamic>.from((result as Map)['revenue'] as Map);
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// AUTH SERVICE
+// ─────────────────────────────────────────────────────────────
 
 class ConvexAuthService implements AuthService {
   final ConvexClient _client;
@@ -522,17 +630,18 @@ class ConvexAuthService implements AuthService {
         'password': password,
       });
       if (result == null) return null;
-      
+
       final token = result['token'] as String;
       final userMap = result['user'] as Map<String, dynamic>;
       final user = User.fromJson(userMap);
-      
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('convex_auth_token', token);
-      
+
       _currentUser = user;
       return user;
     } catch (e) {
+      debugPrint('[Auth] login error: $e');
       return null;
     }
   }
@@ -543,7 +652,8 @@ class ConvexAuthService implements AuthService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('convex_auth_token');
       if (token != null) {
-        await _client.mutation('authQueries:logout', {'token': token});
+        await _client
+            .mutation('authQueries:logout', {'token': token});
       }
       await prefs.remove('convex_auth_token');
     } catch (_) {}
@@ -557,11 +667,13 @@ class ConvexAuthService implements AuthService {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('convex_auth_token');
       if (token == null || token.isEmpty) return null;
-      
-      final result = await _client.query('authQueries:getSessionUser', {'token': token});
+
+      final result = await _client
+          .query('authQueries:getSessionUser', {'token': token});
       if (result == null) return null;
-      
-      final user = User.fromJson(Map<String, dynamic>.from(result as Map));
+
+      final user =
+          User.fromJson(Map<String, dynamic>.from(result as Map));
       _currentUser = user;
       return user;
     } catch (_) {
@@ -569,6 +681,10 @@ class ConvexAuthService implements AuthService {
     }
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// GALLERY, HOTEL SERVICES, SITE CONFIG
+// ─────────────────────────────────────────────────────────────
 
 class ConvexGalleryService {
   final ConvexClient _client;

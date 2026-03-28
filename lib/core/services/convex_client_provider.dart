@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,41 +18,61 @@ class ConvexClient {
     return _callEndpoint(path, args ?? {}, true);
   }
 
-  Future<dynamic> _callEndpoint(String path, Map<String, dynamic> args, bool isMutation) async {
+  Future<dynamic> _callEndpoint(
+      String path, Map<String, dynamic> args, bool isMutation) async {
     if (baseUrl.trim().isEmpty) {
-      throw Exception('Convex Base URL is empty. Did you pass --dart-define-from-file=.env or set FLUTTER_CONVEX_HTTP_URL?');
+      throw Exception(
+          'Convex Base URL is empty. Did you pass --dart-define-from-file=.env or set FLUTTER_CONVEX_HTTP_URL?');
     }
-    
-    // Ensure we don't have double slashes if baseUrl has a trailing slash.
-    final cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+
+    final cleanBaseUrl = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     final uri = Uri.parse('$cleanBaseUrl/api');
-    
+
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('convex_auth_token');
-    
-    // Remove null values so Convex v.optional(...) doesn't crash on standard JSON nulls
-    final cleanArgs = Map<String, dynamic>.from(args)..removeWhere((k, v) => v == null);
+
+    // Remove null values so Convex v.optional(...) doesn't crash on JSON null.
+    final cleanArgs = Map<String, dynamic>.from(args)
+      ..removeWhere((k, v) => v == null);
+
+    final body = jsonEncode({
+      'path': path,
+      'args': cleanArgs,
+      'isMutation': isMutation,
+    });
+
+    debugPrint('[Convex] ${isMutation ? "MUT" : "QRY"} $path  args=${cleanArgs.keys.toList()}');
 
     final response = await http.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        if (token != null && token.isNotEmpty)
+          'Authorization': 'Bearer $token',
       },
-      body: jsonEncode({
-        'path': path,
-        'args': cleanArgs,
-        'isMutation': isMutation,
-      }),
+      body: body,
     );
+
+    debugPrint('[Convex] $path → ${response.statusCode}');
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is Map && decoded.containsKey('error')) {
-        throw Exception(decoded['error']);
+        debugPrint('[Convex] ERROR from $path: ${decoded['error']}');
+        throw Exception('Convex error in $path: ${decoded['error']}');
       }
       return decoded;
     }
-    throw Exception('Failed fetching from Convex: ${response.statusCode} - ${response.body}');
+
+    // Non-200: include status + body for debugging.
+    final errBody = response.body.length > 500
+        ? '${response.body.substring(0, 500)}…'
+        : response.body;
+    debugPrint('[Convex] FAIL $path: ${response.statusCode} $errBody');
+    throw Exception(
+        'Convex $path failed (${response.statusCode}): $errBody');
   }
 
   void close() {}

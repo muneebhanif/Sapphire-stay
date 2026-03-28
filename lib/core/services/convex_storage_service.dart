@@ -9,29 +9,49 @@ final convexStorageServiceProvider = Provider<ConvexStorageService>((ref) {
 });
 
 class ConvexStorageService {
+  /// Upload image bytes to Convex HTTP storage endpoint.
+  ///
+  /// Returns the `storageId` string, or null on failure.
   Future<String?> uploadImage(Uint8List bytes, String mimeType) async {
     try {
       final url = Uri.parse('${ConvexEnv.httpUrl}/uploadImage');
-      final request = http.Request('POST', url)
-        ..headers['Content-Type'] = mimeType
-        ..bodyBytes = bytes;
       
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
-      
+      debugPrint('[Storage] Uploading ${bytes.length} bytes to $url');
+
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': mimeType,
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: bytes,
+      );
+
+      debugPrint('[Storage] Response status: ${response.statusCode}');
+      debugPrint('[Storage] Response body: ${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['storageId'] as String?;
+        final storageId = data['storageId'];
+        if (storageId != null) {
+          final id = storageId.toString();
+          debugPrint('[Storage] Upload OK, storageId=$id');
+          return id;
+        } else {
+          debugPrint('[Storage] Upload returned null storageId');
+          return null;
+        }
       } else {
-        debugPrint('Upload failed with status: ${response.statusCode}');
+        debugPrint('[Storage] Upload failed: ${response.statusCode} ${response.body}');
         return null;
       }
     } catch (e) {
-      debugPrint('Error uploading image: $e');
+      debugPrint('[Storage] Upload exception: $e');
       return null;
     }
   }
 
+  /// Build a URL that serves the image for the given storageId.
   String getImageUrl(String storageId) {
     return '${ConvexEnv.httpUrl}/getImage?storageId=$storageId';
   }

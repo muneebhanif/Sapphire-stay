@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { api } from "./_generated/api";
 
 export const callEndpoint = httpAction(async (ctx, request) => {
+  // CORS preflight
   if (request.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -17,30 +18,51 @@ export const callEndpoint = httpAction(async (ctx, request) => {
   try {
     const { path, args, isMutation } = await request.json();
     
-    // Auth Token Parsing
+    // ── Auth Token Parsing ──
     const authHeader = request.headers.get("Authorization");
     let userRole: string | null = null;
     let userId: string | null = null;
 
     if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
-      const sessionUser = await ctx.runQuery(api.authQueries.getSessionUser, { token });
-      if (!sessionUser) {
-        return new Response(JSON.stringify({ error: "Invalid or expired session" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        });
+      try {
+        const sessionUser = await ctx.runQuery(api.authQueries.getSessionUser, { token });
+        if (sessionUser) {
+          userRole = sessionUser.role;
+          userId = sessionUser.id;
+        }
+        // If session is invalid/expired, we don't reject here — 
+        // we only reject if the endpoint requires auth (see below).
+      } catch {
+        // Token parsing failed — treat as unauthenticated
       }
-      userRole = sessionUser.role;
-      userId = sessionUser.id;
     }
 
-    // Role-Based Access Control (RBAC) mapping
-    // Endpoints requiring admin or staff authentication.
-    // NOTE: data:createGuest, bookingRequests:createBookingRequest, and
-    // bookingRequests:submitPaymentProof are intentionally NOT restricted,
-    // because unauthenticated customers use them during the booking flow.
-    const adminStaffRestricted = new Set([
+    // ── Role-Based Access Control ──
+    //
+    // Public endpoints (no auth required):
+    //   - data:getAllRooms, data:getFeaturedRooms, data:getRoomById
+    //   - data:getAllReviews, data:getAverageRating
+    //   - data:getGalleryImages, data:getHotelServices, data:getSiteConfig
+    //   - data:getAllBookings, data:getAllGuests, data:getAllInvoices, data:getAllPayments
+    //   - data:getTotalRevenue
+    //   - data:createGuest (customers create their own guest record during booking)
+    //   - bookingRequests:createBookingRequest
+    //   - bookingRequests:submitPaymentProof
+    //   - authQueries:login, authQueries:logout, authQueries:getSessionUser
+    //
+    // Staff or Admin required:
+    const staffRestricted = new Set([
+      "bookingRequests:reviewPaymentProof",
+      "bookingRequests:getAllPaymentProofs",
+      "bookingRequests:getPendingPaymentProofs",
+      "bookingRequests:getAllBookingRequests",
+      "data:getStaff",
+      "data:getReports",
+    ]);
+
+    // Admin only:
+    const adminOnly = new Set([
       "data:createRoom",
       "data:updateRoom",
       "data:deleteRoom",
@@ -49,42 +71,37 @@ export const callEndpoint = httpAction(async (ctx, request) => {
       "data:createStaff",
       "data:updateStaff",
       "data:deactivateStaff",
-      "data:getStaff",
-      "data:getReports",
-      "bookingRequests:reviewPaymentProof",
-      "bookingRequests:getAllPaymentProofs",
-      "bookingRequests:getPendingPaymentProofs",
-      "bookingRequests:getAllBookingRequests",
     ]);
 
-    if (adminStaffRestricted.has(path)) {
+    if (staffRestricted.has(path)) {
       if (userRole !== "admin" && userRole !== "staff") {
-        return new Response(JSON.stringify({ error: "Forbidden: Requires Admin or Staff role" }), {
-          status: 403,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        });
+        return new Response(
+          JSON.stringify({ error: "Forbidden: Requires Staff or Admin role" }),
+          { status: 403, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+        );
       }
     }
-    
-    // Auto-inject userId for endpoints that require it instead of hacking with getFirstUsers
-    if (userId) {
-       // if an argument isn't explicitly defined it will be stripped or throw, 
-       // but we can just leave it to args. For now, pass token so backend can use it.
+
+    if (adminOnly.has(path)) {
+      if (userRole !== "admin") {
+        return new Response(
+          JSON.stringify({ error: "Forbidden: Requires Admin role" }),
+          { status: 403, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+        );
+      }
     }
 
+    // ── Dynamic function routing ──
     const [moduleName, functionName] = path.split(":");
-    let result;
-    
-    // Quick hack for this project to route dynamic names to the actual functions.
-    // Instead of full dynamic routing which TS doesn't like, we match explicitly or somewhat dynamically.
     const mod = (api as any)[moduleName];
     if (!mod || !mod[functionName]) {
-      return new Response(JSON.stringify({ error: `Not found: ${path}` }), { 
-        status: 404,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-      });
+      return new Response(
+        JSON.stringify({ error: `Not found: ${path}` }),
+        { status: 404, headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } }
+      );
     }
     
+    let result;
     if (isMutation) {
       result = await ctx.runMutation(mod[functionName], args);
     } else {
@@ -99,6 +116,7 @@ export const callEndpoint = httpAction(async (ctx, request) => {
       },
     });
   } catch (err: any) {
+    console.error("[apiProxy] Error:", err.message);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500,
       headers: {
