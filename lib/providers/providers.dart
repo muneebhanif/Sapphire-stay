@@ -14,6 +14,20 @@ import '../core/services/convex_api_service.dart';
 import '../core/services/convex_client_provider.dart';
 import '../core/services/convex_storage_service.dart';
 
+String _cleanBrandingText(String value) {
+  var cleaned = value;
+  final patterns = <RegExp>[
+    RegExp(r'\s*\|?\s*made\s+with\s+[a-z0-9._-]+\.?\s*', caseSensitive: false),
+    RegExp(r'\s*\|?\s*powered\s+by\s+[a-z0-9._-]+\.?\s*', caseSensitive: false),
+  ];
+
+  for (final pattern in patterns) {
+    cleaned = cleaned.replaceAll(pattern, ' ');
+  }
+
+  return cleaned.replaceAll(RegExp(r'\s+'), ' ').trim();
+}
+
 /// ─── Service Providers ────────────────────────────────────────────
 ///
 /// All providers now use Convex-backed implementations.
@@ -195,15 +209,39 @@ final pendingPaymentProofsProvider = FutureProvider<List<PaymentProof>>((ref) {
 
 /// ─── Gallery, Services, Site Config ──────────────────────────────
 final galleryImagesProvider = FutureProvider<List<Map<String, String>>>((ref) {
-  return ref.watch(galleryServiceProvider).getGalleryImages();
+  return ref.watch(galleryServiceProvider).getGalleryImages().then(
+        (items) => items
+            .map(
+              (item) => {
+                ...item,
+                'caption': _cleanBrandingText(item['caption'] ?? ''),
+              },
+            )
+            .toList(),
+      );
 });
 
 final hotelServicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
-  return ref.watch(hotelServicesServiceProvider).getHotelServices();
+  return ref.watch(hotelServicesServiceProvider).getHotelServices().then(
+        (items) => items
+            .map(
+              (item) => {
+                ...item,
+                'title': _cleanBrandingText((item['title'] ?? '').toString()),
+                'description':
+                    _cleanBrandingText((item['description'] ?? '').toString()),
+              },
+            )
+            .toList(),
+      );
 });
 
 final siteConfigProvider = FutureProvider<Map<String, String>>((ref) {
-  return ref.watch(siteConfigServiceProvider).getSiteConfig();
+  return ref.watch(siteConfigServiceProvider).getSiteConfig().then(
+        (config) => config.map(
+          (key, value) => MapEntry(key, _cleanBrandingText(value)),
+        ),
+      );
 });
 
 /// ─── Convenience aliases (used in screens) ────────────────────────
