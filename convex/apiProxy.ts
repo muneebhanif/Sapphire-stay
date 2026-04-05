@@ -43,7 +43,7 @@ export const callEndpoint = httpAction(async (ctx, request) => {
     // Public endpoints (no auth required):
     //   - data:getAllRooms, data:getFeaturedRooms, data:getRoomById
     //   - data:getAllReviews, data:getAverageRating
-    //   - data:getGalleryImages, data:getHotelServices, data:getSiteConfig
+    //   - data:getGalleryImages, data:getSiteConfig
     //   - data:getAllBookings, data:getAllGuests, data:getAllInvoices, data:getAllPayments
     //   - data:getTotalRevenue
     //   - data:createGuest (customers create their own guest record during booking)

@@ -424,21 +424,6 @@ export const getGalleryImages = query({
   },
 });
 
-export const getHotelServices = query({
-  args: {},
-  handler: async (ctx) => {
-    const services = await ctx.db
-      .query("hotelServices")
-      .withIndex("by_sortOrder")
-      .collect();
-    return services.map((s) => ({
-      icon: s.icon,
-      title: s.title,
-      description: s.description,
-    }));
-  },
-});
-
 export const getSiteConfig = query({
   args: {},
   handler: async (ctx) => {

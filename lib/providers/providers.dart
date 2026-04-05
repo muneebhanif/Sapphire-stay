@@ -55,12 +55,9 @@ final paymentProofServiceProvider = Provider<PaymentProofService>((ref) {
   return ConvexPaymentProofService(client, storage);
 });
 
-/// ─── Gallery, Services, Site Config Providers ─────────────────────
+/// ─── Gallery + Site Config Providers ───────────────────────────────
 final galleryServiceProvider = Provider<ConvexGalleryService>((ref) =>
     ConvexGalleryService(ref.watch(convexClientProvider)));
-
-final hotelServicesServiceProvider = Provider<ConvexHotelServicesService>((ref) =>
-    ConvexHotelServicesService(ref.watch(convexClientProvider)));
 
 final siteConfigServiceProvider = Provider<ConvexSiteConfigService>((ref) =>
     ConvexSiteConfigService(ref.watch(convexClientProvider)));
@@ -207,7 +204,7 @@ final pendingPaymentProofsProvider = FutureProvider<List<PaymentProof>>((ref) {
   return ref.watch(paymentProofServiceProvider).getPendingPaymentProofs();
 });
 
-/// ─── Gallery, Services, Site Config ──────────────────────────────
+/// ─── Gallery + Site Config ───────────────────────────────────────
 final galleryImagesProvider = FutureProvider<List<Map<String, String>>>((ref) {
   return ref.watch(galleryServiceProvider).getGalleryImages().then(
         (items) => items
@@ -215,21 +212,6 @@ final galleryImagesProvider = FutureProvider<List<Map<String, String>>>((ref) {
               (item) => {
                 ...item,
                 'caption': _cleanBrandingText(item['caption'] ?? ''),
-              },
-            )
-            .toList(),
-      );
-});
-
-final hotelServicesProvider = FutureProvider<List<Map<String, dynamic>>>((ref) {
-  return ref.watch(hotelServicesServiceProvider).getHotelServices().then(
-        (items) => items
-            .map(
-              (item) => {
-                ...item,
-                'title': _cleanBrandingText((item['title'] ?? '').toString()),
-                'description':
-                    _cleanBrandingText((item['description'] ?? '').toString()),
               },
             )
             .toList(),

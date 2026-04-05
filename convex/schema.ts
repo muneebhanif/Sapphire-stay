@@ -161,14 +161,6 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_sortOrder", ["sortOrder"]),
 
-  hotelServices: defineTable({
-    icon: v.string(),
-    title: v.string(),
-    description: v.string(),
-    sortOrder: v.number(),
-    createdAt: v.number(),
-  }).index("by_sortOrder", ["sortOrder"]),
-
   siteConfig: defineTable({
     key: v.string(),
     value: v.string(),

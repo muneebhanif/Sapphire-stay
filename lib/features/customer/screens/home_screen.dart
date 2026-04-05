@@ -9,7 +9,6 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_section_header.dart';
-import '../../../core/widgets/ss_loading.dart';
 import '../../../providers/providers.dart';
 import '../widgets/availability_picker.dart';
 import '../widgets/hero_section.dart';
@@ -56,17 +55,12 @@ class HomeScreen extends ConsumerWidget {
 
         const SizedBox(height: AppSpacing.xxxl),
 
-        // ── 5. Services Highlights ──
-        _buildServicesHighlights(context, ref),
-
-        const SizedBox(height: AppSpacing.xxxl),
-
-        // ── 6. Reviews Preview ──
+        // ── 5. Reviews Preview ──
         _buildReviewsPreview(context, ref),
 
         const SizedBox(height: AppSpacing.xxxl),
 
-        // ── 7. CTA Banner ──
+        // ── 6. CTA Banner ──
         _buildCtaBanner(context, ref),
 
         const SizedBox(height: AppSpacing.xxxl),
@@ -245,110 +239,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildServicesHighlights(BuildContext context, WidgetRef ref) {
-    final servicesAsync = ref.watch(hotelServicesProvider);
-
-    final iconMap = {
-      'restaurant': Icons.restaurant,
-      'spa': Icons.spa,
-      'pool': Icons.pool,
-      'business': Icons.business_center,
-      'car': Icons.directions_car,
-      'room_service': Icons.room_service,
-      'laundry': Icons.local_laundry_service,
-      'concierge': Icons.support_agent,
-    };
-
-    return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: Responsive.pagePadding(context),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppSpacing.maxContentWidth),
-        child: Column(
-          children: [
-            SSSectionHeader(
-              title: 'Hotel Services',
-              subtitle: 'Everything you need for a perfect stay',
-              alignment: CrossAxisAlignment.center,
-              actionLabel: 'All Services',
-              onAction: () => context.go(RoutePaths.services),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            servicesAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              ),
-              error: (e, _) => Text('Error loading services: $e'),
-              data: (services) => Wrap(
-                spacing: AppSpacing.lg,
-                runSpacing: AppSpacing.lg,
-                alignment: WrapAlignment.center,
-                children: services.take(4).map((s) {
-                  final icon = iconMap[s['icon'] as String] ?? Icons.star;
-                  return _buildServiceCard(
-                    context,
-                    _ServiceItem(
-                      icon,
-                      s['title'] as String,
-                      s['description'] as String,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildServiceCard(BuildContext context, _ServiceItem item) {
-    final width = Responsive.value<double>(
-      context,
-      mobile: double.infinity,
-      tablet: 250,
-      desktop: 260,
-    );
-
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              ),
-              child: Icon(item.icon, color: AppColors.accent, size: 28),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              item.title,
-              style: AppTypography.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              item.description,
-              style: AppTypography.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildReviewsPreview(BuildContext context, WidgetRef ref) {
     final reviewsAsync = ref.watch(allReviewsProvider);
 
@@ -511,11 +401,4 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
-}
-
-class _ServiceItem {
-  final IconData icon;
-  final String title;
-  final String description;
-  const _ServiceItem(this.icon, this.title, this.description);
 }

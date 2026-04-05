@@ -127,7 +127,6 @@ class CustomerFooter extends ConsumerWidget {
     final links = [
       ('Home', RoutePaths.home),
       ('Rooms', RoutePaths.rooms),
-      ('Services', RoutePaths.services),
       ('Gallery', RoutePaths.gallery),
       ('About Us', RoutePaths.about),
       ('Contact', RoutePaths.contact),

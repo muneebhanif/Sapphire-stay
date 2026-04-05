@@ -18,7 +18,6 @@ class CustomerNavBar extends StatelessWidget {
   static final _navItems = [
     _NavItem('Home', RoutePaths.home),
     _NavItem('Rooms', RoutePaths.rooms),
-    _NavItem('Services', RoutePaths.services),
     _NavItem('Gallery', RoutePaths.gallery),
     _NavItem('About', RoutePaths.about),
     _NavItem('Contact', RoutePaths.contact),
@@ -142,7 +141,6 @@ class CustomerDrawer extends StatelessWidget {
   static final _navItems = [
     _NavItem('Home', RoutePaths.home),
     _NavItem('Rooms', RoutePaths.rooms),
-    _NavItem('Services', RoutePaths.services),
     _NavItem('Gallery', RoutePaths.gallery),
     _NavItem('About', RoutePaths.about),
     _NavItem('Contact', RoutePaths.contact),

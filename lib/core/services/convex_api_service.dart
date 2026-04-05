@@ -683,7 +683,7 @@ class ConvexAuthService implements AuthService {
 }
 
 // ─────────────────────────────────────────────────────────────
-// GALLERY, HOTEL SERVICES, SITE CONFIG
+// GALLERY + SITE CONFIG
 // ─────────────────────────────────────────────────────────────
 
 class ConvexGalleryService {
@@ -697,23 +697,6 @@ class ConvexGalleryService {
       return {
         'url': m['url'] as String,
         'caption': m['caption'] as String,
-      };
-    }).toList();
-  }
-}
-
-class ConvexHotelServicesService {
-  final ConvexClient _client;
-  ConvexHotelServicesService(this._client);
-
-  Future<List<Map<String, dynamic>>> getHotelServices() async {
-    final results = await _client.query('data:getHotelServices');
-    return (results as List).map((s) {
-      final m = s as Map<String, dynamic>;
-      return {
-        'icon': m['icon'] as String,
-        'title': m['title'] as String,
-        'description': m['description'] as String,
       };
     }).toList();
   }

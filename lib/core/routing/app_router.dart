@@ -22,7 +22,6 @@ import '../../features/customer/screens/home_screen.dart';
 import '../../features/customer/screens/room_detail_screen.dart';
 import '../../features/customer/screens/rooms_screen.dart';
 import '../../features/customer/screens/reviews_screen.dart';
-import '../../features/customer/screens/services_screen.dart';
 import '../../features/customer/widgets/customer_shell.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/staff/screens/staff_dashboard_screen.dart';
@@ -45,7 +44,6 @@ abstract final class RoutePaths {
   static const String bookingPayment = '/booking/payment';
   static const String bookingConfirmation = '/booking/confirmation';
   static const String gallery = '/gallery';
-  static const String services = '/services';
   static const String contact = '/contact';
   static const String reviews = '/reviews';
 
@@ -223,12 +221,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: RoutePaths.gallery,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: GalleryScreen(),
-            ),
-          ),
-          GoRoute(
-            path: RoutePaths.services,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: ServicesScreen(),
             ),
           ),
           GoRoute(

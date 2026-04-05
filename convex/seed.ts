@@ -101,33 +101,6 @@ export const seedGallery = mutation({
   },
 });
 
-export const seedServices = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const services = [
-      { icon: "restaurant", title: "Fine Dining", description: "Award-winning restaurant featuring international cuisine prepared by renowned chefs. Open for breakfast, lunch, and dinner." },
-      { icon: "spa", title: "Spa & Wellness", description: "Full-service spa offering massages, facials, body treatments, and a state-of-the-art fitness center." },
-      { icon: "pool", title: "Swimming Pool", description: "Heated infinity pool with panoramic ocean views, poolside bar, and dedicated cabanas." },
-      { icon: "business", title: "Business Center", description: "Fully equipped business center with meeting rooms, conference facilities, and high-speed internet." },
-      { icon: "car", title: "Valet Parking", description: "Complimentary valet parking for all guests. Airport shuttle service available upon request." },
-      { icon: "room_service", title: "24/7 Room Service", description: "Round-the-clock in-room dining with an extensive menu. Special dietary requirements accommodated." },
-      { icon: "laundry", title: "Laundry Service", description: "Same-day laundry and dry cleaning service. Express service available for urgent needs." },
-      { icon: "concierge", title: "Concierge", description: "Expert concierge team to assist with tour bookings, restaurant reservations, and local recommendations." },
-    ];
-    const now = Date.now();
-    for (let i = 0; i < services.length; i++) {
-      await ctx.db.insert("hotelServices", {
-        icon: services[i].icon,
-        title: services[i].title,
-        description: services[i].description,
-        sortOrder: i,
-        createdAt: now,
-      });
-    }
-    return { inserted: services.length };
-  },
-});
-
 export const seedSiteConfig = mutation({
   args: {},
   handler: async (ctx) => {
