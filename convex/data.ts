@@ -39,9 +39,6 @@ const localSiteMediaByKey: Record<string, string> = {
   hero_image: "assets/imgs/banner.jpeg",
   hotel_exterior: "assets/imgs/turf.jpeg",
   hotel_lobby: "assets/imgs/room.jpeg",
-  hotel_pool: "assets/imgs/balcony.jpeg",
-  hotel_restaurant: "assets/imgs/room5.jpeg",
-  hotel_spa: "assets/imgs/bathroom.jpeg",
 };
 
 const normalizeMediaUrl = (url: string | undefined | null, fallback: string) => {

@@ -17,42 +17,67 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
   <style>
-    /* Loading indicator while Flutter initializes */
+    /* Lightweight skeleton while Flutter initializes */
     .loading-container {
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: flex-start;
       height: 100vh;
-      background: #0F1B2D;
+      background: #F5F3EF;
       flex-direction: column;
       font-family: 'Segoe UI', sans-serif;
+      padding: 24px;
+      box-sizing: border-box;
     }
-    .loading-logo {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #C9A96E;
-      letter-spacing: 4px;
+    .skel {
+      background: linear-gradient(90deg, #E0DCD5 25%, #F8F7F4 37%, #E0DCD5 63%);
+      background-size: 400% 100%;
+      animation: shimmer 1.2s ease-in-out infinite;
+      border-radius: 8px;
+    }
+    .skel-title {
+      width: 220px;
+      height: 28px;
+      margin-bottom: 16px;
+    }
+    .skel-subtitle {
+      width: 340px;
+      height: 14px;
       margin-bottom: 24px;
     }
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(201, 169, 110, 0.2);
-      border-top: 3px solid #C9A96E;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    .skel-row {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      flex-wrap: wrap;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    .skel-card {
+      width: min(360px, 100%);
+      height: 220px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: 0 0; }
     }
   </style>
 </head>
 <body>
   <div id="loading" class="loading-container">
-    <div class="loading-logo">STAYSITE</div>
-    <div class="loading-spinner"></div>
+    <div class="skel skel-title"></div>
+    <div class="skel skel-subtitle"></div>
+    <div class="skel-row">
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+      <div class="skel skel-card"></div>
+    </div>
   </div>
 
   <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      const loader = document.getElementById('loading');
+      if (loader) loader.remove();
+    });
+  </script>
 </body>
 </html>

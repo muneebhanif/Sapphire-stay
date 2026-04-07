@@ -8,6 +8,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
+import '../../../core/widgets/ss_loading.dart';
 import '../../../core/widgets/ss_section_header.dart';
 import '../../../providers/providers.dart';
 import '../widgets/availability_picker.dart';
@@ -87,9 +88,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
             featuredRooms.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.accent),
-              ),
+              loading: () => const SSLoading(type: SSLoadingType.card),
               error: (e, _) => Text('Error: $e'),
               data: (rooms) => Wrap(
                 spacing: AppSpacing.lg,
@@ -261,9 +260,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.xl),
             reviewsAsync.when(
-              loading: () => const CircularProgressIndicator(
-                color: AppColors.accent,
-              ),
+              loading: () => const SSLoading(type: SSLoadingType.card),
               error: (e, _) => Text('Error: $e'),
               data: (reviews) => Wrap(
                 spacing: AppSpacing.lg,
@@ -346,8 +343,8 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildCtaBanner(BuildContext context, WidgetRef ref) {
     final configAsync = ref.watch(siteConfigProvider);
     final poolImage = configAsync.whenOrNull(
-      data: (config) => config['hotel_pool'],
-    ) ?? AppConstants.hotelPool;
+      data: (config) => config['hotel_lobby'],
+    ) ?? AppConstants.hotelLobby;
 
     return Container(
       width: double.infinity,
