@@ -102,8 +102,7 @@ class HeroSection extends ConsumerWidget {
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 600),
                   child: Text(
-                    'Indulge in world-class amenities, breathtaking views, and impeccable '
-                    'service at our award-winning coastal retreat.',
+                    'Stay in comfortable, clean rooms at Sapphire Stay in Muzaffarabad.',
                     style: AppTypography.bodyLarge.copyWith(
                       color: AppColors.white.withValues(alpha: 0.85),
                       height: 1.6,

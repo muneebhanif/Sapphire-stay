@@ -83,7 +83,6 @@ class GalleryScreen extends ConsumerWidget {
                   final img = images[index];
                   return _GalleryItem(
                     imageUrl: img['url']!,
-                    caption: img['caption']!,
                     onTap: () => _showLightbox(context, images, index),
                   );
                 },
@@ -113,12 +112,10 @@ class GalleryScreen extends ConsumerWidget {
 
 class _GalleryItem extends StatelessWidget {
   final String imageUrl;
-  final String caption;
   final VoidCallback onTap;
 
   const _GalleryItem({
     required this.imageUrl,
-    required this.caption,
     required this.onTap,
   });
 
@@ -137,31 +134,6 @@ class _GalleryItem extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.surfaceVariant,
                 child: const Icon(Icons.image_not_supported),
-              ),
-            ),
-            // ── Gradient overlay ──
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.7),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-                child: Text(
-                  caption,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.white,
-                  ),
-                ),
               ),
             ),
             // ── Hover zoom icon ──
@@ -224,20 +196,6 @@ class _GalleryLightboxState extends State<_GalleryLightbox> {
             child: Image.network(
               img['url']!,
               fit: BoxFit.contain,
-            ),
-          ),
-
-          // ── Caption ──
-          Positioned(
-            bottom: AppSpacing.lg,
-            left: 0,
-            right: 0,
-            child: Text(
-              img['caption']!,
-              textAlign: TextAlign.center,
-              style: AppTypography.titleMedium.copyWith(
-                color: AppColors.white,
-              ),
             ),
           ),
 

@@ -6,16 +6,16 @@
 /// or when a DB entry doesn't exist.
 abstract final class AppConstants {
   // ── Branding ──
-  static const String appName = 'StaySite';
-  static const String hotelName = 'Sapphire Stay Hotel';
-  static const String tagline = 'Experience Luxury & Comfort at its Finest';
+    static const String appName = 'Sapphire Stay';
+    static const String hotelName = 'Sapphire Stay | Muzaffarabad';
+    static const String tagline = 'Comfortable Rooms in Muzaffarabad';
   static const String copyright =
-      '© 2026 Sapphire Stay Hotel. All rights reserved.';
+            '© 2026 Sapphire Stay | Muzaffarabad. All rights reserved.';
 
   // ── Contact (fallback) ──
-  static const String phone = '+92 300 1234567';
-  static const String email = 'info@sapphirestay.com';
-  static const String address = 'Main Boulevard, Islamabad, Pakistan';
+    static const String phone = '+92 317 9219995';
+    static const String email = 'sapphire.stay';
+    static const String address = 'Gojra Bypass Road, Muzaffarabad, Pakistan, 13100.';
 
   // ── Currency ──
   static const double usdToPkrRate = 280.0;

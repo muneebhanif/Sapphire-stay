@@ -16,7 +16,7 @@ class StaySiteApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'StaySite | Sapphire Stay Hotel',
+      title: 'Sapphire Stay | Muzaffarabad',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,

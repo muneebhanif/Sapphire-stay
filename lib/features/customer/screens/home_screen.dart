@@ -199,9 +199,8 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Sapphire Stay Hotel has been a beacon of luxury hospitality for over two '
-          'decades. Nestled along the pristine coastline, our hotel combines timeless '
-          'elegance with modern comfort to create unforgettable experiences for every guest.',
+          'Sapphire Stay offers clean, comfortable rooms in Muzaffarabad with '
+          'friendly service and a convenient location for every traveler.',
           style: AppTypography.bodyLarge.copyWith(height: 1.8),
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -376,7 +375,7 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.md),
             Text(
               'Book your room today and experience the finest hospitality '
-              'at Sapphire Stay Hotel.',
+              'at Sapphire Stay | Muzaffarabad.',
               style: AppTypography.bodyLarge.copyWith(
                 color: AppColors.white.withValues(alpha: 0.85),
               ),

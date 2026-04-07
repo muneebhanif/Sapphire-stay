@@ -113,8 +113,7 @@ class CustomerFooter extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Experience luxury and comfort at its finest. Our hotel offers world-class '
-          'amenities and exceptional service in a stunning coastal location.',
+          'Comfortable and clean rooms for your stay in Muzaffarabad.',
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.textTertiary,
           ),
