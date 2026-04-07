@@ -15,6 +15,42 @@ const statusToBookingModelStatus = (status: string) => {
 const asIso = (millis: number | undefined) =>
   new Date(millis ?? Date.now()).toISOString();
 
+const localRoomImages = {
+  standard: "assets/imgs/room1.jpeg",
+  deluxe: "assets/imgs/room2.jpeg",
+  suite: "assets/imgs/room3.jpeg",
+  presidential: "assets/imgs/room6.jpeg",
+};
+
+const localGalleryImages = [
+  "assets/imgs/turf.jpeg",
+  "assets/imgs/room.jpeg",
+  "assets/imgs/balcony.jpeg",
+  "assets/imgs/room5.jpeg",
+  "assets/imgs/bathroom.jpeg",
+  "assets/imgs/room1.jpeg",
+  "assets/imgs/room2.jpeg",
+  "assets/imgs/room3.jpeg",
+  "assets/imgs/room6.jpeg",
+  "assets/imgs/banner.jpeg",
+];
+
+const localSiteMediaByKey: Record<string, string> = {
+  hero_image: "assets/imgs/banner.jpeg",
+  hotel_exterior: "assets/imgs/turf.jpeg",
+  hotel_lobby: "assets/imgs/room.jpeg",
+  hotel_pool: "assets/imgs/balcony.jpeg",
+  hotel_restaurant: "assets/imgs/room5.jpeg",
+  hotel_spa: "assets/imgs/bathroom.jpeg",
+};
+
+const normalizeMediaUrl = (url: string | undefined | null, fallback: string) => {
+  if (!url || url.trim().length === 0) return fallback;
+  const value = url.trim();
+  if (value.includes("images.unsplash.com")) return fallback;
+  return value;
+};
+
 const mapRoomData = (r, featuredIds = new Set<string>()) => ({
   id: idOf(r._id),
   number: r.roomNumber,
@@ -27,7 +63,9 @@ const mapRoomData = (r, featuredIds = new Set<string>()) => ({
   size_sq_ft: 400.0,
   status: r.status,
   amenities: r.amenities || [],
-  image_urls: r.imageUrls || [],
+  image_urls: (r.imageUrls && r.imageUrls.length > 0)
+    ? r.imageUrls.map((u) => normalizeMediaUrl(u, localRoomImages[r.type] || "assets/imgs/room.jpeg"))
+    : [localRoomImages[r.type] || "assets/imgs/room.jpeg"],
   is_featured: featuredIds.has(idOf(r._id)),
 });
 
@@ -417,8 +455,8 @@ export const getGalleryImages = query({
       .query("galleryImages")
       .withIndex("by_sortOrder")
       .collect();
-    return images.map((img) => ({
-      url: img.url,
+    return images.map((img, index) => ({
+      url: normalizeMediaUrl(img.url, localGalleryImages[index % localGalleryImages.length]),
       caption: img.caption,
     }));
   },
@@ -430,8 +468,13 @@ export const getSiteConfig = query({
     const configs = await ctx.db.query("siteConfig").collect();
     const result: Record<string, string> = {};
     for (const c of configs) {
-      result[c.key] = c.value;
+      result[c.key] = normalizeMediaUrl(c.value, localSiteMediaByKey[c.key] ?? c.value);
     }
+
+    for (const [k, v] of Object.entries(localSiteMediaByKey)) {
+      if (!result[k]) result[k] = v;
+    }
+
     return result;
   },
 });

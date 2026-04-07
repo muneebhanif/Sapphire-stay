@@ -20,25 +20,25 @@ abstract final class AppConstants {
   // ── Currency ──
   static const double usdToPkrRate = 280.0;
 
-  // ── Stock Image URLs (fallback when DB has none) ──
+  // ── Local media assets (fallback when DB has none) ──
   static const String heroImage =
-      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&q=80';
+      'assets/imgs/banner.jpeg';
   static const String hotelExterior =
-      'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&q=80';
+      'assets/imgs/turf.jpeg';
   static const String hotelLobby =
-      'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&q=80';
+      'assets/imgs/room.jpeg';
   static const String hotelPool =
-      'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&q=80';
+      'assets/imgs/balcony.jpeg';
   static const String hotelRestaurant =
-      'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&q=80';
+      'assets/imgs/room5.jpeg';
   static const String hotelSpa =
-      'https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1200&q=80';
+      'assets/imgs/bathroom.jpeg';
   static const String roomStandard =
-      'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&q=80';
+      'assets/imgs/room1.jpeg';
   static const String roomDeluxe =
-      'https://images.unsplash.com/photo-1631049552057-403cdb8f0658?w=1200&q=80';
+      'assets/imgs/room2.jpeg';
   static const String roomSuite =
-      'https://images.unsplash.com/photo-1590490360182-c33d82de0e5c?w=1200&q=80';
+      'assets/imgs/room3.jpeg';
   static const String roomPresidential =
-      'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=80';
+      'assets/imgs/room6.jpeg';
 }

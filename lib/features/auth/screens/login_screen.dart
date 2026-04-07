@@ -88,7 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   color: AppColors.primary,
                   image: DecorationImage(
                     image: NetworkImage(
-                      'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200',
+                      'assets/imgs/banner.jpeg',
                     ),
                     fit: BoxFit.cover,
                     opacity: 0.3,

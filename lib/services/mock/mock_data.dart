@@ -371,8 +371,7 @@ abstract final class MockData {
       senderNumber: '03001234567',
       transactionId: 'EPX-77889911',
       amountPkr: 67200,
-      screenshotUrl:
-          'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=1200&q=80',
+      screenshotUrl: AppConstants.heroImage,
       message: 'Paid via Easypaisa, please confirm booking.',
       status: PaymentProofStatus.pending,
       createdAt: DateTime(2026, 2, 8, 14, 30),

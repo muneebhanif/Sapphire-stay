@@ -42,7 +42,7 @@ export const seedUsers = mutation({
       pricePkr: 5000,
       status: "available",
       amenities: ["WiFi", "TV", "AC"],
-      imageUrls: ["https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80"],
+      imageUrls: ["assets/imgs/room1.jpeg"],
       createdAt: Date.now(),
     });
 
@@ -54,7 +54,7 @@ export const seedUsers = mutation({
       pricePkr: 12000,
       status: "available",
       amenities: ["WiFi", "TV", "AC", "Mini Bar", "City View", "King Bed"],
-      imageUrls: ["https://images.unsplash.com/photo-1590490360182-c33d955c3795?w=800&q=80"],
+      imageUrls: ["assets/imgs/room2.jpeg"],
       createdAt: Date.now(),
     });
 
@@ -66,7 +66,7 @@ export const seedUsers = mutation({
       pricePkr: 25000,
       status: "available",
       amenities: ["WiFi", "Smart TV", "AC", "Mini Bar", "Living Room", "Butler Service", "Panoramic View"],
-      imageUrls: ["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80"],
+      imageUrls: ["assets/imgs/room3.jpeg"],
       createdAt: Date.now(),
     });
 
@@ -78,15 +78,16 @@ export const seedGallery = mutation({
   args: {},
   handler: async (ctx) => {
     const images = [
-      { url: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80", caption: "Hotel Exterior" },
-      { url: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80", caption: "Grand Lobby" },
-      { url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80", caption: "Infinity Pool" },
-      { url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80", caption: "Fine Dining Restaurant" },
-      { url: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1200&q=80", caption: "Spa & Wellness Center" },
-      { url: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80", caption: "Standard Room" },
-      { url: "https://images.unsplash.com/photo-1590490360182-c33d955c3795?w=800&q=80", caption: "Deluxe Room" },
-      { url: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&q=80", caption: "Sapphire Suite" },
-      { url: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80", caption: "Presidential Suite" },
+      { url: "assets/imgs/turf.jpeg", caption: "Hotel Exterior" },
+      { url: "assets/imgs/room.jpeg", caption: "Grand Lobby" },
+      { url: "assets/imgs/balcony.jpeg", caption: "Infinity Pool" },
+      { url: "assets/imgs/room5.jpeg", caption: "Restaurant" },
+      { url: "assets/imgs/bathroom.jpeg", caption: "Spa & Wellness Center" },
+      { url: "assets/imgs/room1.jpeg", caption: "Standard Room" },
+      { url: "assets/imgs/room2.jpeg", caption: "Deluxe Room" },
+      { url: "assets/imgs/room3.jpeg", caption: "Sapphire Suite" },
+      { url: "assets/imgs/room6.jpeg", caption: "Presidential Suite" },
+      { url: "assets/imgs/banner.jpeg", caption: "Hotel Banner" },
     ];
     const now = Date.now();
     for (let i = 0; i < images.length; i++) {
@@ -110,12 +111,12 @@ export const seedSiteConfig = mutation({
       { key: "phone", value: "+1 (555) 123-4567" },
       { key: "email", value: "info@sapphirestay.com" },
       { key: "address", value: "123 Ocean Boulevard, Coastal City, CS 90210" },
-      { key: "hero_image", value: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1920&q=80" },
-      { key: "hotel_exterior", value: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=80" },
-      { key: "hotel_lobby", value: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&q=80" },
-      { key: "hotel_pool", value: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&q=80" },
-      { key: "hotel_restaurant", value: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&q=80" },
-      { key: "hotel_spa", value: "https://images.unsplash.com/photo-1540555700478-4be289fbec6d?w=1200&q=80" },
+      { key: "hero_image", value: "assets/imgs/banner.jpeg" },
+      { key: "hotel_exterior", value: "assets/imgs/turf.jpeg" },
+      { key: "hotel_lobby", value: "assets/imgs/room.jpeg" },
+      { key: "hotel_pool", value: "assets/imgs/balcony.jpeg" },
+      { key: "hotel_restaurant", value: "assets/imgs/room5.jpeg" },
+      { key: "hotel_spa", value: "assets/imgs/bathroom.jpeg" },
       { key: "stat_years", value: "25+" },
       { key: "stat_guests", value: "50K+" },
       { key: "stat_staff", value: "100+" },
