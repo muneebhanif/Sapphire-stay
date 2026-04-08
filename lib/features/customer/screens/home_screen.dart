@@ -194,7 +194,7 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
-          'A Legacy of Luxury\nSince 1998',
+          'Comfortable Stay in\nMuzaffarabad',
           style: AppTypography.headlineLarge,
         ),
         const SizedBox(height: AppSpacing.md),

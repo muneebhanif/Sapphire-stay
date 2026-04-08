@@ -23,7 +23,6 @@ const localRoomImages = {
 };
 
 const localGalleryImages = [
-  "assets/imgs/1000199454.jpg",
   "assets/imgs/turf.jpeg",
   "assets/imgs/room.jpeg",
   "assets/imgs/balcony.jpeg",
@@ -449,21 +448,14 @@ export const getReports = query({
 export const getGalleryImages = query({
   args: {},
   handler: async (ctx) => {
-    const logoImage = "assets/imgs/1000199454.jpg";
     const images = await ctx.db
       .query("galleryImages")
       .withIndex("by_sortOrder")
       .collect();
-    const normalized = images.map((img, index) => ({
+    return images.map((img, index) => ({
       url: normalizeMediaUrl(img.url, localGalleryImages[index % localGalleryImages.length]),
       caption: img.caption,
     }));
-
-    if (!normalized.some((img) => img.url === logoImage)) {
-      normalized.unshift({ url: logoImage, caption: "" });
-    }
-
-    return normalized;
   },
 });
 

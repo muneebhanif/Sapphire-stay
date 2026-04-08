@@ -1,55 +1,132 @@
-Title: StaySite, A Web System for Sapphire Stay Hotel
-Introduction:
-Many hotels still manage reservations, room allocation, guest records, and billing using
-manual methods. This often causes delays, errors, and difficulty in maintaining accurate
-records. Without a proper web-based system, hotels also face limitations in providing
-online information and booking services to customers.
-Sapphire Stay Hotel currently does not have an integrated digital system for managing its
-operations. The purpose of this project is to design and develop a hotel management web
-system to automate basic hotel processes and provide an online interface for customers
-and hotel staff, using Sapphire Stay Hotel as a case study.
-Existing System/ Description of the Current Situation:
-Sapphire Stay Hotel currently manages its operations manually. Reservations and
-bookings are recorded on paper. Guest records, room allocation, and billing are
-maintained manually at the reception desk. Reports on bookings and revenue
-are generated using paper files, which is time-consuming and prone to errors.
-The hotel does not have a dedicated website or online booking system, limiting customer
-access and reducing potential bookings. Manual operations make it difficult to track
-payments, monitor room availability, and respond quickly to customer requests.
-Problem Statement:
-Sapphire Stay Hotel currently faces several operational challenges due to the lack of a
-digital system. The hotel does not have a dedicated website or online booking system,
-which limits customer access and convenience. Reservations, room allocation, guest
-records, and billing are all handled manually, increasing the risk of errors and delays.
-Generating reports on bookings, occupancy, and revenue is time-consuming, and tracking
-payments or monitoring overall hotel operations is difficult. These limitations reduce
-efficiency and make it harder to provide timely and accurate service to customers.
-.Proposed Solution:
-To address the current challenges, this project proposes the design and development of a
-Hotel Management Web System for Sapphire Stay Hotel. The system will provide an
-online interface for customers to view available rooms, check prices, and make
-reservations. On the staff side, the system will automate room allocation, guest record
-management, check-in/check-out processes, billing, and payment tracking. It will also
-allow staff to generate reports on bookings and revenue easily.
-By digitalizing these operations, the system aims to reduce errors, save time, improverecord accuracy, and enhance the overall efficiency of hotel management.
-Scope of the Project:
-Customer Module:
-This module is designed for hotel guests to interact with the system online. Customers
-can view detailed information about the hotel, including rooms, pricing, capacity, and
-facilities. They can check room availability for specific dates, submit booking requests,
-and receive booking confirmations. The module also includes a gallery of hotel and room
-images, a services page, and a contact form with location map. Optional features include
-submitting feedback and reviews. Overall, this module improves customer access,
-convenience, and engagement with the hotel.
-Staff Module:
-The Staff Module provides limited access for daily hotel operations, suitable for receptionists
-. Staff can handle bookings and walk-ins, perform guest check-in and check-out, and generate
-invoices. They can track payments relevant to their operations but cannot access staff
-management or system-wide reports. This module ensures smooth daily operations
-while maintaining security and proper access control.
-Admin Module:
-The Admin Module provides full access to all hotel operations. Admins can manage
-rooms, bookings, guest records, and the check-in/check-out process. They can generate
-invoices, track payments, and monitor reports on bookings, occupancy, and revenue.
-Admins also manage staff accounts and assign roles and permissions. This module
-ensures centralized control and efficient management of the hotel.
+# Sapphire Stay Thesis Project Context (AI Scope Guide)
+
+This document defines the **project context and boundaries** for any AI assistant working on this repository.
+
+## 1) Project Identity
+
+- **Project Name:** Sapphire Stay Hotel Management Web System
+- **Case Study Location:** Muzaffarabad, Pakistan
+- **Primary Goal:** Build a web-based hotel management system for thesis work.
+- **Current Product Direction:**
+	- Room-focused hotel website and management panel
+	- Dynamic database-driven data
+	- No mock/static business data in active flows
+
+## 2) Final Business Context (Use This as Source of Truth)
+
+- **Hotel Name:** Sapphire Stay | Muzaffarabad
+- **Address:** Gojra Bypass Road, Muzaffarabad, Pakistan, 13100.
+- **Contact Number:** +92 317 9219995
+- **Public Contact Handle:** sapphire.stay
+- **Offered Core Feature:** Rooms (booking and management)
+
+## 3) Strict Scope Rules for AI
+
+When helping in this project, AI should:
+
+1. Stay within hotel-management thesis scope.
+2. Prefer improving existing architecture, not introducing unrelated systems.
+3. Keep data **database-first** (Convex) for site content and operational records.
+4. Use local media from `imgs/` / `assets/imgs/` where required.
+5. Preserve existing module boundaries: customer, staff, admin.
+6. Keep changes minimal, practical, and production-oriented.
+
+AI should **not**:
+
+- Add irrelevant features outside hotel thesis scope.
+- Reintroduce mock-first behavior for customer-facing business content.
+- Add default placeholder branding/location that conflicts with Muzaffarabad details.
+- Add a services/amenities marketing module that contradicts current room-focused direction.
+
+## 4) Functional Modules in Scope
+
+### Customer Module
+- Browse room information and pricing
+- Submit booking requests
+- View gallery images
+- View contact/location information
+- Read and submit reviews (if enabled in current flow)
+
+### Staff Module
+- Daily booking handling
+- Check-in/check-out support
+- Invoice/payment operational tasks
+
+### Admin Module
+- Manage rooms, bookings, guests
+- Manage staff accounts
+- Monitor reports (occupancy/revenue/booking trends)
+- Maintain site content via DB-backed configuration
+
+## 5) Why We Made This Project
+
+This project was developed as a thesis case study to solve real hotel management problems at Sapphire Stay.
+
+### Core reasons
+- Replace manual/paper-based operations with a digital workflow.
+- Reduce booking, billing, and record-keeping errors.
+- Provide customers an online room browsing and booking experience.
+- Improve staff efficiency for daily operations.
+- Give admins better visibility through centralized reports and data.
+
+### Expected impact
+- Faster operations and fewer mistakes
+- Better customer convenience and communication
+- Easier reporting for decision-making
+- Scalable foundation for future hotel growth
+
+## 6) Technologies Used (and Why)
+
+- **Flutter Web (Frontend UI)**
+	- Single modern codebase for responsive web interface.
+	- Faster development for thesis timeline.
+
+- **Riverpod (State Management)**
+	- Predictable and testable state flow.
+	- Clean separation between UI and business/data logic.
+
+- **GoRouter (Navigation/Routing)**
+	- Structured route management for customer, staff, and admin flows.
+	- Better maintainability as project grows.
+
+- **Convex (Backend + Database + APIs)**
+	- Real-time friendly backend with typed queries/mutations.
+	- Central source of truth for rooms, bookings, users, reports, and site content.
+	- Supports DB-first requirement and removes dependency on mock data.
+
+- **TypeScript (Convex functions)**
+	- Safer backend logic with strong typing.
+	- Easier long-term maintenance.
+
+- **Local Media Assets (`imgs/` → `assets/imgs/...`)**
+	- Controlled media source for consistent branding.
+	- Avoids random external placeholder dependencies.
+
+## 7) Data/Content Policy
+
+- Website content should come from DB-backed providers whenever available.
+- Fallback constants are safety-only, not business source of truth.
+- Gallery should show images without titles/captions in UI.
+- Logo image is part of gallery content.
+
+## 8) Thesis Problem and Solution Summary
+
+### Problem
+Manual hotel operations cause delays, errors, weak reporting, and poor customer access.
+
+### Proposed Solution
+Provide an integrated web system for customer booking visibility and full hotel operations management (staff/admin), improving speed, accuracy, and reporting.
+
+## 9) Definition of Done for Future AI Tasks
+
+A task is considered aligned only if it:
+
+- Supports thesis objectives,
+- Respects room-focused business direction,
+- Keeps DB-first data flow,
+- Preserves Muzaffarabad business identity,
+- Does not introduce out-of-scope functionality.
+
+---
+
+If there is any conflict between old text and this file, **follow this file**.

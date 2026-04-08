@@ -78,7 +78,6 @@ export const seedGallery = mutation({
   args: {},
   handler: async (ctx) => {
     const images = [
-      { url: "assets/imgs/1000199454.jpg", caption: "" },
       { url: "assets/imgs/turf.jpeg", caption: "" },
       { url: "assets/imgs/room.jpeg", caption: "" },
       { url: "assets/imgs/balcony.jpeg", caption: "" },
@@ -164,7 +163,6 @@ export const syncPublicContent = mutation({
     const now = Date.now();
 
     const galleryUrls = [
-      "assets/imgs/1000199454.jpg",
       "assets/imgs/turf.jpeg",
       "assets/imgs/room.jpeg",
       "assets/imgs/balcony.jpeg",

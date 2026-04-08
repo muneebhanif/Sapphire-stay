@@ -155,25 +155,20 @@ class AboutScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Founded in 1998, Sapphire Stay Hotel began as a family vision to create a '
-          'hospitality experience that transcends the ordinary. What started as a boutique '
-          'property with just 20 rooms has grown into a premier destination renowned '
-          'for its impeccable service and stunning architecture.',
+          'Sapphire Stay in Muzaffarabad was created to provide a welcoming and '
+          'comfortable stay experience for travelers and families.',
           style: AppTypography.bodyLarge.copyWith(height: 1.8),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Today, our hotel stands as a testament to the enduring values of warmth, '
-          'attention to detail, and genuine care for every guest who walks through our doors. '
-          'We believe that true luxury is not just about opulent surroundings — it\'s about '
-          'creating moments that become cherished memories.',
+          'Our location near Gojra Bypass Road, Muzaffarabad makes it convenient for '
+          'guests to access the city while enjoying a peaceful and relaxing environment.',
           style: AppTypography.bodyLarge.copyWith(height: 1.8),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Our dedicated team of hospitality professionals works tirelessly to ensure that '
-          'every aspect of your stay exceeds expectations, from the moment you arrive until '
-          'your departure.',
+          'We focus on clean rooms, friendly service, and a dependable guest experience '
+          'from check-in to check-out.',
           style: AppTypography.bodyLarge.copyWith(height: 1.8),
         ),
       ],
