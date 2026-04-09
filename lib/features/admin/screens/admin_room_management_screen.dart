@@ -89,19 +89,31 @@ class AdminRoomManagementScreen extends ConsumerWidget {
     final amenitiesCtrl = TextEditingController(text: 'WiFi, TV, AC');
     String selectedType = 'standard';
     final formKey = GlobalKey<FormState>();
-    Uint8List? imageBytes;
-    String? mimeType;
+    List<Uint8List> imageBytesList = [];
+    List<String> mimeTypes = [];
     bool isSaving = false;
 
-    Future<void> pickImage(StateSetter setDialogState) async {
+    Future<void> pickImages(StateSetter setDialogState) async {
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isNotEmpty) {
+        final selected = pickedFiles.take(6).toList();
+        final bytesList = <Uint8List>[];
+        final types = <String>[];
+        for (final file in selected) {
+          bytesList.add(await file.readAsBytes());
+          types.add(file.mimeType ?? 'image/jpeg');
+        }
         setDialogState(() {
-          imageBytes = bytes;
-          mimeType = pickedFile.mimeType ?? 'image/jpeg';
+          imageBytesList = bytesList;
+          mimeTypes = types;
         });
+
+        if (pickedFiles.length > 6 && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Only first 6 images were selected.')),
+          );
+        }
       }
     }
 
@@ -190,26 +202,71 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       prefixIcon: Icons.star_outline,
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    Text('Room Image (Optional)', style: AppTypography.labelLarge),
+                    Text('Room Images (Optional, up to 6)', style: AppTypography.labelLarge),
                     const SizedBox(height: AppSpacing.xs),
                     GestureDetector(
-                      onTap: () => pickImage(setDialogState),
+                      onTap: () => pickImages(setDialogState),
                       child: Container(
-                        height: 200,
+                        constraints: const BoxConstraints(minHeight: 200),
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: AppColors.surfaceVariant,
                           border: Border.all(color: AppColors.border),
                           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
                         ),
-                        child: imageBytes != null
-                            ? Image.memory(imageBytes!, fit: BoxFit.contain)
+                        child: imageBytesList.isNotEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.all(AppSpacing.sm),
+                                child: Wrap(
+                                  spacing: AppSpacing.sm,
+                                  runSpacing: AppSpacing.sm,
+                                  children: List.generate(imageBytesList.length, (index) {
+                                    return Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                          child: Image.memory(
+                                            imageBytesList[index],
+                                            width: 96,
+                                            height: 96,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 2,
+                                          right: 2,
+                                          child: InkWell(
+                                            onTap: () {
+                                              setDialogState(() {
+                                                imageBytesList.removeAt(index);
+                                                mimeTypes.removeAt(index);
+                                              });
+                                            },
+                                            child: Container(
+                                              decoration: const BoxDecoration(
+                                                color: Colors.black54,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              padding: const EdgeInsets.all(2),
+                                              child: const Icon(
+                                                Icons.close,
+                                                size: 14,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                              )
                             : const Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(Icons.upload_file, size: 48, color: AppColors.textSecondary),
                                   SizedBox(height: AppSpacing.sm),
-                                  Text('Tap to upload room photo'),
+                                  Text('Tap to upload room photos'),
                                 ],
                               ),
                       ),
@@ -231,13 +288,18 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       if (!(formKey.currentState?.validate() ?? false)) return;
                       setDialogState(() => isSaving = true);
 
-                      String? finalImageUrl;
-                      if (imageBytes != null && mimeType != null) {
+                      final imageUrls = <String>[];
+                      if (imageBytesList.isNotEmpty) {
                         try {
                           final storageService = ref.read(convexStorageServiceProvider);
-                          final storageId = await storageService.uploadImage(imageBytes!, mimeType!);
-                          if (storageId != null) {
-                            finalImageUrl = storageService.getImageUrl(storageId);
+                          for (var i = 0; i < imageBytesList.length; i++) {
+                            final storageId = await storageService.uploadImage(
+                              imageBytesList[i],
+                              mimeTypes[i],
+                            );
+                            if (storageId != null) {
+                              imageUrls.add(storageService.getImageUrl(storageId));
+                            }
                           }
                         } catch (e) {
                           if (context.mounted) {
@@ -270,7 +332,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                             .map((e) => e.trim())
                             .where((e) => e.isNotEmpty)
                             .toList(),
-                        imageUrls: finalImageUrl != null ? [finalImageUrl] : [],
+                        imageUrls: imageUrls.take(6).toList(),
                         isFeatured: false,
                       );
 

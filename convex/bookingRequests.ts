@@ -13,6 +13,14 @@ export const createBookingRequest = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const customer = await ctx.db.get(args.customerId);
+    if (!customer || !customer.isActive) {
+      throw new Error("Authenticated customer not found");
+    }
+    if (customer.role !== "customer") {
+      throw new Error("Only customer accounts can create booking requests");
+    }
+
     const now = Date.now();
     return await ctx.db.insert("bookingRequests", {
       ...args,

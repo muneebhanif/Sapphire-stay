@@ -48,6 +48,14 @@ const normalizeMediaUrl = (url: string | undefined | null, fallback: string) => 
   return value;
 };
 
+const normalizeImageUrls = (imageUrls: string[] | undefined) => {
+  if (!imageUrls || imageUrls.length === 0) return [];
+  return imageUrls
+    .map((u) => (u ?? "").trim())
+    .filter((u) => u.length > 0)
+    .slice(0, 6);
+};
+
 const mapRoomData = (r, featuredIds = new Set<string>()) => ({
   id: idOf(r._id),
   number: r.roomNumber,
@@ -119,6 +127,7 @@ export const createRoom = mutation({
     imageUrls: v.array(v.string()),
   },
   handler: async (ctx, args) => {
+    const imageUrls = normalizeImageUrls(args.imageUrls);
     const id = await ctx.db.insert("rooms", {
       roomNumber: args.roomNumber,
       type: args.type,
@@ -127,7 +136,7 @@ export const createRoom = mutation({
       pricePkr: args.pricePkr,
       status: args.status,
       amenities: args.amenities,
-      imageUrls: args.imageUrls,
+      imageUrls,
       createdAt: Date.now(),
     });
     const r = await ctx.db.get(id);
@@ -149,8 +158,15 @@ export const updateRoom = mutation({
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
+    const normalizedUpdates = {
+      ...updates,
+      imageUrls:
+        updates.imageUrls === undefined
+          ? undefined
+          : normalizeImageUrls(updates.imageUrls),
+    };
     const filtered = Object.fromEntries(
-      Object.entries(updates).filter(([_, val]) => val !== undefined),
+      Object.entries(normalizedUpdates).filter(([_, val]) => val !== undefined),
     );
     await ctx.db.patch(id, filtered);
     const r = await ctx.db.get(id);
@@ -452,10 +468,27 @@ export const getGalleryImages = query({
       .query("galleryImages")
       .withIndex("by_sortOrder")
       .collect();
-    return images.map((img, index) => ({
-      url: normalizeMediaUrl(img.url, localGalleryImages[index % localGalleryImages.length]),
-      caption: img.caption,
-    }));
+
+    const roomImageUrls = (await ctx.db.query("rooms").collect())
+      .flatMap((room) => normalizeImageUrls(room.imageUrls));
+
+    const merged = [
+      ...images.map((img, index) => ({
+        url: normalizeMediaUrl(
+          img.url,
+          localGalleryImages[index % localGalleryImages.length],
+        ),
+        caption: img.caption,
+      })),
+      ...roomImageUrls.map((url) => ({ url, caption: "" })),
+    ];
+
+    const seen = new Set<string>();
+    return merged.filter((item) => {
+      if (seen.has(item.url)) return false;
+      seen.add(item.url);
+      return true;
+    });
   },
 });
 

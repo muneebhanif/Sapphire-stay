@@ -24,24 +24,25 @@ class ConvexBookingRequestService implements BookingRequestService {
 
   @override
   Future<BookingRequest> createBookingRequest(BookingRequest request) async {
-    // Step 1: Create (or find) a guest user so we get a customerId.
-    //         data:createGuest is publicly accessible (no auth required).
-    final guestResult = await _client.mutation('data:createGuest', {
-      'name': request.customerName,
-      'email': request.customerEmail,
-      'phone': request.customerPhone,
-    });
-
-    // The mutation returns the Convex ID as a JSON string.
-    // Convex ID strings may be quoted → strip outer quotes if present.
-    String customerId = guestResult.toString();
-    if (customerId.startsWith('"') && customerId.endsWith('"')) {
-      customerId = customerId.substring(1, customerId.length - 1);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('convex_auth_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Authentication required for booking.');
     }
+
+    final sessionUser = await _client.query(
+      'authQueries:getSessionUser',
+      {'token': token},
+    );
+    if (sessionUser == null) {
+      throw Exception('Authentication required for booking.');
+    }
+
+    final String customerId =
+      (sessionUser as Map<String, dynamic>)['id'] as String;
 
     debugPrint('[BookingRequest] customerId = $customerId');
 
-    // Step 2: Create the booking request itself.
     final id = await _client.mutation('bookingRequests:createBookingRequest', {
       'customerId': customerId,
       'roomId': request.roomId.isNotEmpty ? request.roomId : null,

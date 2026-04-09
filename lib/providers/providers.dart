@@ -205,7 +205,7 @@ final pendingPaymentProofsProvider = FutureProvider<List<PaymentProof>>((ref) {
 });
 
 /// ─── Gallery + Site Config ───────────────────────────────────────
-final galleryImagesProvider = FutureProvider<List<Map<String, String>>>((ref) {
+final galleryImagesProvider = FutureProvider.autoDispose<List<Map<String, String>>>((ref) {
   return ref.watch(galleryServiceProvider).getGalleryImages().then(
         (items) => items
             .map(

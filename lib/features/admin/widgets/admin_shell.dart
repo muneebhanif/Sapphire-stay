@@ -63,9 +63,11 @@ class AdminShell extends ConsumerWidget {
       child: Row(
         children: [
           if (!isDesktop)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
             ),
           if (!isDesktop) const SizedBox(width: AppSpacing.sm),
           Text(

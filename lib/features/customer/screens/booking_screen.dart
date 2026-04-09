@@ -82,6 +82,41 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = ref.watch(authProvider);
+    if (user == null) {
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: Responsive.pagePadding(context),
+          vertical: AppSpacing.xl,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, size: 56, color: AppColors.textTertiary),
+                const SizedBox(height: AppSpacing.md),
+                Text('Login Required', style: AppTypography.headlineSmall),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Please login or sign up before booking a room.',
+                  style: AppTypography.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                SSButton(
+                  label: 'Go to Login',
+                  icon: Icons.login,
+                  onPressed: () => context.go(RoutePaths.login),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: Responsive.pagePadding(context),
@@ -583,6 +618,17 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
   }
 
   Future<void> _handleSubmit() async {
+    final user = ref.read(authProvider);
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please login before booking.')),
+        );
+      }
+      context.go(RoutePaths.login);
+      return;
+    }
+
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }

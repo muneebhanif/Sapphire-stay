@@ -104,6 +104,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final path = state.uri.path;
       final isGoingToAdmin = path.startsWith('/admin');
       final isGoingToStaff = path.startsWith('/staff');
+      final isGoingToBooking = path.startsWith('/booking');
       final isGoingToLogin = path == RoutePaths.login;
 
       // --- Protected routes ---
@@ -121,6 +122,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             authState.role.name != 'admin') {
           return RoutePaths.home;
         }
+      }
+
+      if (isGoingToBooking && authState == null) {
+        return RoutePaths.login;
       }
 
       // --- Already logged in? Redirect away from login ---

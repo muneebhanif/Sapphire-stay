@@ -19,8 +19,6 @@ class StaffShell extends ConsumerStatefulWidget {
 }
 
 class _StaffShellState extends ConsumerState<StaffShell> {
-  bool _drawerOpen = false;
-
   static const _navItems = [
     _NavItem(Icons.dashboard_outlined, 'Dashboard', RoutePaths.staffDashboard),
     _NavItem(Icons.book_outlined, 'Bookings', RoutePaths.staffBookings),
@@ -73,9 +71,11 @@ class _StaffShellState extends ConsumerState<StaffShell> {
       child: Row(
         children: [
           if (!isDesktop)
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
             ),
           if (!isDesktop) const SizedBox(width: AppSpacing.sm),
           Text(

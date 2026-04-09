@@ -67,7 +67,7 @@ class RoomDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // ── Image ──
+                // ── Images ──
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                   child: Image.network(
@@ -82,6 +82,32 @@ class RoomDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (room.imageUrls.length > 1) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  SizedBox(
+                    height: 88,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: room.imageUrls.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+                      itemBuilder: (_, i) => ClipRRect(
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                        child: Image.network(
+                          room.imageUrls[i],
+                          width: 120,
+                          height: 88,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 120,
+                            height: 88,
+                            color: AppColors.surfaceVariant,
+                            child: const Icon(Icons.broken_image_outlined),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.xl),
 
                 // ── Content ──
