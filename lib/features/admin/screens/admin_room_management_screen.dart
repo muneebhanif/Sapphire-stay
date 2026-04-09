@@ -140,7 +140,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
-                      value: selectedType,
+                      initialValue: selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Room Type',
                       ),
@@ -378,9 +378,327 @@ class AdminRoomManagementScreen extends ConsumerWidget {
     );
   }
 
+  void _showEditRoomDialog(BuildContext context, WidgetRef ref, Room room) {
+    final numberCtrl = TextEditingController(text: room.number);
+    final floorCtrl = TextEditingController(text: '${room.floor}');
+    final capacityCtrl = TextEditingController(text: '${room.capacity}');
+    final priceCtrl = TextEditingController(text: room.pricePerNight.toStringAsFixed(0));
+    final amenitiesCtrl = TextEditingController(text: room.amenities.join(', '));
+    String selectedType = room.type.name;
+    final formKey = GlobalKey<FormState>();
+
+    final existingUrls = List<String>.from(room.imageUrls);
+    final List<Uint8List> newImageBytesList = [];
+    final List<String> newMimeTypes = [];
+    bool isSaving = false;
+
+    Future<void> pickImages(StateSetter setDialogState) async {
+      final remaining = 6 - (existingUrls.length + newImageBytesList.length);
+      if (remaining <= 0) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Maximum 6 images allowed per room.')),
+          );
+        }
+        return;
+      }
+
+      final picker = ImagePicker();
+      final pickedFiles = await picker.pickMultiImage();
+      if (pickedFiles.isEmpty) return;
+
+      final selected = pickedFiles.take(remaining).toList();
+      final bytesList = <Uint8List>[];
+      final types = <String>[];
+
+      for (final file in selected) {
+        bytesList.add(await file.readAsBytes());
+        types.add(file.mimeType ?? 'image/jpeg');
+      }
+
+      setDialogState(() {
+        newImageBytesList.addAll(bytesList);
+        newMimeTypes.addAll(types);
+      });
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text('Edit Room ${room.number}'),
+          content: SizedBox(
+            width: 520,
+            child: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SSTextField(
+                      label: 'Room Number',
+                      hint: '101',
+                      controller: numberCtrl,
+                      prefixIcon: Icons.meeting_room_outlined,
+                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedType,
+                      decoration: const InputDecoration(labelText: 'Room Type'),
+                      items: const [
+                        DropdownMenuItem(value: 'standard', child: Text('Standard')),
+                        DropdownMenuItem(value: 'deluxe', child: Text('Deluxe')),
+                        DropdownMenuItem(value: 'suite', child: Text('Suite')),
+                        DropdownMenuItem(value: 'presidential', child: Text('Presidential')),
+                      ],
+                      onChanged: (v) => setDialogState(() => selectedType = v ?? selectedType),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SSTextField(
+                            label: 'Floor',
+                            hint: '1',
+                            controller: floorCtrl,
+                            keyboardType: TextInputType.number,
+                            validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: SSTextField(
+                            label: 'Capacity',
+                            hint: '2',
+                            controller: capacityCtrl,
+                            keyboardType: TextInputType.number,
+                            validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SSTextField(
+                      label: 'Price per Night (PKR)',
+                      hint: '5000',
+                      controller: priceCtrl,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.attach_money,
+                      validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SSTextField(
+                      label: 'Amenities (comma-separated)',
+                      hint: 'WiFi, TV, AC',
+                      controller: amenitiesCtrl,
+                      prefixIcon: Icons.star_outline,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Room Images (max 6)', style: AppTypography.labelLarge),
+                        TextButton.icon(
+                          onPressed: () => pickImages(setDialogState),
+                          icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                          label: const Text('Add Images'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Container(
+                      width: double.infinity,
+                      constraints: const BoxConstraints(minHeight: 120),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant,
+                        border: Border.all(color: AppColors.border),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                      ),
+                      child: Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: [
+                          ...List.generate(existingUrls.length, (index) {
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                  child: Image.network(
+                                    existingUrls[index],
+                                    width: 90,
+                                    height: 90,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 90,
+                                      height: 90,
+                                      color: AppColors.border,
+                                      child: const Icon(Icons.broken_image_outlined),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 2,
+                                  right: 2,
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() => existingUrls.removeAt(index)),
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                          ...List.generate(newImageBytesList.length, (index) {
+                            return Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                  child: Image.memory(
+                                    newImageBytesList[index],
+                                    width: 90,
+                                    height: 90,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 2,
+                                  right: 2,
+                                  child: InkWell(
+                                    onTap: () => setDialogState(() {
+                                      newImageBytesList.removeAt(index);
+                                      newMimeTypes.removeAt(index);
+                                    }),
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      setDialogState(() => isSaving = true);
+
+                      final uploadedUrls = <String>[];
+                      if (newImageBytesList.isNotEmpty) {
+                        try {
+                          final storageService = ref.read(convexStorageServiceProvider);
+                          for (var i = 0; i < newImageBytesList.length; i++) {
+                            final storageId = await storageService.uploadImage(
+                              newImageBytesList[i],
+                              newMimeTypes[i],
+                            );
+                            if (storageId != null) {
+                              uploadedUrls.add(storageService.getImageUrl(storageId));
+                            }
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to upload image: $e')),
+                            );
+                          }
+                        }
+                      }
+
+                      final updated = Room(
+                        id: room.id,
+                        number: numberCtrl.text.trim(),
+                        type: RoomType.values.firstWhere(
+                          (t) => t.name == selectedType,
+                          orElse: () => room.type,
+                        ),
+                        name: 'Room ${numberCtrl.text.trim()}',
+                        description: room.description,
+                        pricePerNight: double.tryParse(priceCtrl.text.trim()) ?? room.pricePerNight,
+                        capacity: int.tryParse(capacityCtrl.text.trim()) ?? room.capacity,
+                        floor: int.tryParse(floorCtrl.text.trim()) ?? room.floor,
+                        sizeInSqFt: room.sizeInSqFt,
+                        status: room.status,
+                        amenities: amenitiesCtrl.text
+                            .split(',')
+                            .map((e) => e.trim())
+                            .where((e) => e.isNotEmpty)
+                            .toList(),
+                        imageUrls: [...existingUrls, ...uploadedUrls].take(6).toList(),
+                        isFeatured: room.isFeatured,
+                      );
+
+                      try {
+                        await ref.read(roomServiceProvider).updateRoom(updated);
+                        ref.invalidate(roomsProvider);
+                        ref.invalidate(featuredRoomsProvider);
+                        ref.invalidate(roomDetailProvider(room.id));
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Room ${updated.number} updated successfully!'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setDialogState(() => isSaving = false);
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to update room: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: isSaving
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _handleRoomAction(
       BuildContext context, WidgetRef ref, Room room, String action) async {
-    if (action == 'delete') {
+    if (action == 'edit') {
+      _showEditRoomDialog(context, ref, room);
+    } else if (action == 'delete') {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -406,6 +724,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
           await ref.read(roomServiceProvider).deleteRoom(room.id);
           ref.invalidate(roomsProvider);
           ref.invalidate(featuredRoomsProvider);
+          ref.invalidate(roomDetailProvider(room.id));
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -458,6 +777,8 @@ class AdminRoomManagementScreen extends ConsumerWidget {
           );
           await ref.read(roomServiceProvider).updateRoom(updated);
           ref.invalidate(roomsProvider);
+          ref.invalidate(featuredRoomsProvider);
+          ref.invalidate(roomDetailProvider(room.id));
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -526,6 +847,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                   PopupMenuButton<String>(
                     icon: const Icon(Icons.more_vert, size: 18),
                     itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'edit', child: Text('Edit Room')),
                       PopupMenuItem(value: 'status', child: Text('Change Status')),
                       PopupMenuItem(value: 'delete', child: Text('Delete')),
                     ],
@@ -569,6 +891,8 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert, size: 18),
                         itemBuilder: (_) => const [
+                          PopupMenuItem(
+                            value: 'edit', child: Text('Edit Room')),
                           PopupMenuItem(
                               value: 'status', child: Text('Change Status')),
                           PopupMenuItem(

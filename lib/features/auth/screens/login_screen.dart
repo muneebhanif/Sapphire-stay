@@ -9,9 +9,10 @@ import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../core/widgets/ss_text_field.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../models/user.dart';
 import '../../../providers/providers.dart';
 
-/// Login screen for staff and admin portal access.
+/// Login/signup screen for guest bookings and staff/admin portal access.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -21,21 +22,53 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
+
+  bool _isSignup = false;
   bool _obscure = true;
+  bool _obscureConfirm = true;
   bool _loading = false;
   String? _error;
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  void _handlePostAuthRedirect(User user, String? nextPath) {
+    if (!mounted) return;
+    switch (user.role.name) {
+      case 'admin':
+        context.go(RoutePaths.adminDashboard);
+        break;
+      case 'staff':
+        context.go(RoutePaths.staffDashboard);
+        break;
+      default:
+        if (nextPath != null && nextPath.isNotEmpty) {
+          context.go(Uri.decodeComponent(nextPath));
+        } else {
+          context.go(RoutePaths.home);
+        }
+    }
+  }
+
+  Future<void> _handleAuthSubmit(String? nextPath) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    if (_isSignup && _passCtrl.text != _confirmPassCtrl.text) {
+      setState(() => _error = 'Passwords do not match');
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -43,32 +76,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     try {
-      final user = await ref.read(authServiceProvider).login(
-            _emailCtrl.text.trim(),
-            _passCtrl.text,
-          );
+      final authService = ref.read(authServiceProvider);
+      final user = _isSignup
+          ? await authService.signup(
+              name: _nameCtrl.text.trim(),
+              email: _emailCtrl.text.trim(),
+              password: _passCtrl.text,
+              phone: _phoneCtrl.text.trim().isEmpty
+                  ? null
+                  : _phoneCtrl.text.trim(),
+            )
+          : await authService.login(
+              _emailCtrl.text.trim(),
+              _passCtrl.text,
+            );
 
       if (user == null) {
-        setState(() => _error = 'Invalid email or password');
+        setState(() => _error = _isSignup
+            ? 'Could not create account. Try another email.'
+            : 'Invalid email or password');
         return;
       }
 
       ref.read(authProvider.notifier).setUser(user);
 
-      if (!mounted) return;
-
-      switch (user.role.name) {
-        case 'admin':
-          context.go(RoutePaths.adminDashboard);
-          break;
-        case 'staff':
-          context.go(RoutePaths.staffDashboard);
-          break;
-        default:
-          context.go(RoutePaths.home);
-      }
+      _handlePostAuthRedirect(user, nextPath);
     } catch (e) {
-      setState(() => _error = 'Something went wrong. Please try again.');
+      setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -76,6 +110,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final nextPath = GoRouterState.of(context).uri.queryParameters['next'];
+
     return Scaffold(
       body: Row(
         children: [
@@ -123,7 +159,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'Sapphire Stay Hotel Management',
+                          'Login or create account to continue',
                           style: AppTypography.bodyLarge.copyWith(
                             color: AppColors.white.withValues(alpha: 0.7),
                           ),
@@ -170,20 +206,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: AppSpacing.md),
                         ],
                         Text(
-                          'Welcome Back',
+                          _isSignup ? 'Create Account' : 'Welcome Back',
                           style: AppTypography.headlineMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.xxs),
                         Text(
-                          'Sign in to access the portal',
+                          _isSignup
+                              ? 'Sign up to book rooms'
+                              : 'Sign in to continue',
                           style: AppTypography.bodyMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.xxl),
+                        if (_isSignup) ...[
+                          SSTextField(
+                            label: 'Full Name',
+                            hint: 'Your name',
+                            controller: _nameCtrl,
+                            prefixIcon: Icons.person_outline,
+                            validator: (v) {
+                              if (!_isSignup) return null;
+                              if (v?.trim().isEmpty ?? true) {
+                                return 'Name is required';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
                         SSTextField(
                           label: 'Email',
-                          hint: 'admin@sapphirestay.com',
+                          hint: 'you@email.com',
                           controller: _emailCtrl,
                           prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
@@ -193,6 +247,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             return null;
                           },
                         ),
+                        if (_isSignup) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          SSTextField(
+                            label: 'Phone (Optional)',
+                            hint: '+92 3XX XXXXXXX',
+                            controller: _phoneCtrl,
+                            prefixIcon: Icons.phone_outlined,
+                            keyboardType: TextInputType.phone,
+                          ),
+                        ],
                         const SizedBox(height: AppSpacing.md),
                         SSTextField(
                           label: 'Password',
@@ -213,6 +277,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           validator: (v) =>
                               v?.isEmpty ?? true ? 'Password is required' : null,
                         ),
+                        if (_isSignup) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          SSTextField(
+                            label: 'Confirm Password',
+                            hint: '••••••••',
+                            controller: _confirmPassCtrl,
+                            prefixIcon: Icons.lock_outline,
+                            obscureText: _obscureConfirm,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscureConfirm
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                                size: 20,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _obscureConfirm = !_obscureConfirm),
+                            ),
+                            validator: (v) {
+                              if (!_isSignup) return null;
+                              if (v?.isEmpty ?? true) {
+                                return 'Confirm your password';
+                              }
+                              if (v != _passCtrl.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                         if (_error != null) ...[
                           const SizedBox(height: AppSpacing.md),
                           Container(
@@ -241,48 +335,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ],
                         const SizedBox(height: AppSpacing.lg),
                         SSButton(
-                          label: 'Sign In',
+                          label: _isSignup ? 'Create Account' : 'Sign In',
                           isExpanded: true,
                           isLoading: _loading,
-                          onPressed: _handleLogin,
+                          onPressed: () => _handleAuthSubmit(nextPath),
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                        // ── Demo credentials ──
-                        Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: AppColors.info.withValues(alpha: 0.08),
-                            borderRadius:
-                                BorderRadius.circular(AppSpacing.radiusMd),
-                            border: Border.all(
-                              color: AppColors.info.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(Icons.info_outline,
-                                      size: 16, color: AppColors.info),
-                                  const SizedBox(width: AppSpacing.xs),
-                                  Text(
-                                    'Demo Credentials',
-                                    style: AppTypography.labelMedium.copyWith(
-                                      color: AppColors.info,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              _buildCredRow('Admin', 'admin@sapphirestay.com'),
-                              const SizedBox(height: 4),
-                              _buildCredRow('Admin Pass', 'admin123'),
-                              const SizedBox(height: 4),
-                              _buildCredRow('Staff', 'staff@sapphirestay.com'),
-                              const SizedBox(height: 4),
-                              _buildCredRow('Staff Pass', 'staff123'),
-                            ],
+                        const SizedBox(height: AppSpacing.md),
+                        TextButton(
+                          onPressed: _loading
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _isSignup = !_isSignup;
+                                    _error = null;
+                                  });
+                                },
+                          child: Text(
+                            _isSignup
+                                ? 'Already have an account? Sign in'
+                                : 'No account? Create one',
                           ),
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -302,28 +373,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCredRow(String label, String value) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 70,
-          child: Text(
-            '$label:',
-            style: AppTypography.bodySmall.copyWith(fontWeight: FontWeight.w600),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: AppTypography.bodySmall.copyWith(
-              fontFamily: 'monospace',
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

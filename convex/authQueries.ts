@@ -62,6 +62,62 @@ export const login = mutation({
   },
 });
 
+export const signupCustomer = mutation({
+  args: {
+    name: v.string(),
+    email: v.string(),
+    password: v.string(),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+
+    if (existing) {
+      throw new Error("An account with this email already exists");
+    }
+
+    const now = Date.now();
+    const hashedPassword = await hashPassword(args.password);
+
+    const userId = await ctx.db.insert("users", {
+      role: "customer",
+      name: args.name,
+      email: args.email,
+      password: hashedPassword,
+      phone: args.phone,
+      isActive: true,
+      createdAt: now,
+    });
+
+    const expiresAt = now + 1000 * 60 * 60 * 24 * 14;
+    const token = crypto.randomUUID();
+
+    await ctx.db.insert("sessions", {
+      token,
+      userId,
+      createdAt: now,
+      expiresAt,
+    });
+
+    return {
+      token,
+      user: {
+        id: userId.toString(),
+        name: args.name,
+        email: args.email,
+        phone: args.phone || "",
+        role: "customer",
+        avatar_url: null,
+        created_at: new Date(now).toISOString(),
+        is_active: true,
+      },
+    };
+  },
+});
+
 export const logout = mutation({
   args: { token: v.string() },
   handler: async (ctx, args) => {

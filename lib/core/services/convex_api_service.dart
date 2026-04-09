@@ -648,6 +648,37 @@ class ConvexAuthService implements AuthService {
   }
 
   @override
+  Future<User?> signup({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    try {
+      final result = await _client.mutation('authQueries:signupCustomer', {
+        'name': name,
+        'email': email,
+        'password': password,
+        'phone': phone,
+      });
+      if (result == null) return null;
+
+      final token = result['token'] as String;
+      final userMap = result['user'] as Map<String, dynamic>;
+      final user = User.fromJson(userMap);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('convex_auth_token', token);
+
+      _currentUser = user;
+      return user;
+    } catch (e) {
+      debugPrint('[Auth] signup error: $e');
+      return null;
+    }
+  }
+
+  @override
   Future<void> logout() async {
     try {
       final prefs = await SharedPreferences.getInstance();

@@ -67,47 +67,10 @@ class RoomDetailScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // ── Images ──
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                  child: Image.network(
-                    room.imageUrls.isNotEmpty ? room.imageUrls.first : '',
-                    height: isDesktop ? 500 : 300,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: isDesktop ? 500 : 300,
-                      color: AppColors.surfaceVariant,
-                      child: const Icon(Icons.image_not_supported, size: 64),
-                    ),
-                  ),
+                _RoomImageGallery(
+                  imageUrls: room.imageUrls,
+                  height: isDesktop ? 500 : 300,
                 ),
-                if (room.imageUrls.length > 1) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  SizedBox(
-                    height: 88,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: room.imageUrls.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
-                      itemBuilder: (_, i) => ClipRRect(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                        child: Image.network(
-                          room.imageUrls[i],
-                          width: 120,
-                          height: 88,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            width: 120,
-                            height: 88,
-                            color: AppColors.surfaceVariant,
-                            child: const Icon(Icons.broken_image_outlined),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: AppSpacing.xl),
 
                 // ── Content ──
@@ -257,7 +220,9 @@ class RoomDetailScreen extends ConsumerWidget {
             label: 'Book This Room',
             isExpanded: true,
             size: SSButtonSize.large,
-            onPressed: () => context.go(RoutePaths.booking),
+            onPressed: () => context.go(
+              '${RoutePaths.booking}?roomId=${Uri.encodeComponent(room.id)}',
+            ),
           ),
           const SizedBox(height: AppSpacing.xs),
           SSButton(
@@ -292,6 +257,174 @@ class RoomDetailScreen extends ConsumerWidget {
           Text(value, style: AppTypography.labelLarge),
         ],
       ),
+    );
+  }
+}
+
+class _RoomImageGallery extends StatefulWidget {
+  final List<String> imageUrls;
+  final double height;
+
+  const _RoomImageGallery({
+    required this.imageUrls,
+    required this.height,
+  });
+
+  @override
+  State<_RoomImageGallery> createState() => _RoomImageGalleryState();
+}
+
+class _RoomImageGalleryState extends State<_RoomImageGallery> {
+  late final PageController _pageController;
+  int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final images = widget.imageUrls;
+    if (images.isEmpty) {
+      return Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          color: AppColors.surfaceVariant,
+        ),
+        child: const Center(
+          child: Icon(Icons.image_not_supported, size: 64),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: SizedBox(
+            height: widget.height,
+            width: double.infinity,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  itemCount: images.length,
+                  onPageChanged: (i) => setState(() => _currentIndex = i),
+                  itemBuilder: (_, i) => Image.network(
+                    images[i],
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.surfaceVariant,
+                      child: const Icon(Icons.broken_image_outlined, size: 48),
+                    ),
+                  ),
+                ),
+                if (images.length > 1) ...[
+                  Positioned(
+                    left: AppSpacing.sm,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: CircleAvatar(
+                        backgroundColor: Colors.black45,
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_left, color: Colors.white),
+                          onPressed: () {
+                            final prev = (_currentIndex - 1).clamp(0, images.length - 1);
+                            _pageController.animateToPage(
+                              prev,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: AppSpacing.sm,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: CircleAvatar(
+                        backgroundColor: Colors.black45,
+                        child: IconButton(
+                          icon: const Icon(Icons.chevron_right, color: Colors.white),
+                          onPressed: () {
+                            final next = (_currentIndex + 1).clamp(0, images.length - 1);
+                            _pageController.animateToPage(
+                              next,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        if (images.length > 1) ...[
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 86,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: images.length,
+              separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+              itemBuilder: (_, i) {
+                final selected = i == _currentIndex;
+                return GestureDetector(
+                  onTap: () {
+                    _pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOut,
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: selected ? AppColors.accent : AppColors.border,
+                        width: selected ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      child: Image.network(
+                        images[i],
+                        width: 120,
+                        height: 86,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          width: 120,
+                          height: 86,
+                          color: AppColors.surfaceVariant,
+                          child: const Icon(Icons.broken_image_outlined),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

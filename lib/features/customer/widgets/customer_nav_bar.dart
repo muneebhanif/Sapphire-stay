@@ -54,7 +54,7 @@ class CustomerNavBar extends StatelessWidget {
             TextButton(
               onPressed: () => context.go(RoutePaths.login),
               child: Text(
-                'Staff Login',
+                'Login / Sign Up',
                 style: AppTypography.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                 ),
@@ -212,7 +212,7 @@ class CustomerDrawer extends StatelessWidget {
                       Navigator.pop(context);
                       context.go(RoutePaths.login);
                     },
-                    child: const Text('Staff Login'),
+                    child: const Text('Login / Sign Up'),
                   ),
                 ],
               ),

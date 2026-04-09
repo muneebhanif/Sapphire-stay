@@ -20,6 +20,12 @@ import '../../models/payment_proof.dart';
 // ─── Auth ──────────────────────────────────────────────────────────
 abstract class AuthService {
   Future<User?> login(String email, String password);
+  Future<User?> signup({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+  });
   Future<void> logout();
   Future<User?> getCurrentUser();
 }

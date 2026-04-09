@@ -82,6 +82,11 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final roomIdFromQuery = GoRouterState.of(context).uri.queryParameters['roomId'];
+    if (_selectedRoomId == null && roomIdFromQuery != null && roomIdFromQuery.isNotEmpty) {
+      _selectedRoomId = roomIdFromQuery;
+    }
+
     final user = ref.watch(authProvider);
     if (user == null) {
       return Padding(
@@ -106,7 +111,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 SSButton(
-                  label: 'Go to Login',
+                  label: 'Login / Sign Up',
                   icon: Icons.login,
                   onPressed: () => context.go(RoutePaths.login),
                 ),
@@ -319,7 +324,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           loading: () => const LinearProgressIndicator(color: AppColors.accent),
           error: (e, _) => Text('Error loading rooms: $e'),
           data: (rooms) => DropdownButtonFormField<String>(
-            value: _selectedRoomId,
+            initialValue: _selectedRoomId,
             decoration: const InputDecoration(
               hintText: 'Choose a room',
             ),

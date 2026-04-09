@@ -125,13 +125,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (isGoingToBooking && authState == null) {
-        return RoutePaths.login;
+        final encodedNext = Uri.encodeComponent(path);
+        return '${RoutePaths.login}?next=$encodedNext';
       }
 
       // --- Already logged in? Redirect away from login ---
       if (isGoingToLogin && authState != null) {
+        final next = state.uri.queryParameters['next'];
         if (authState.role.name == 'admin') return RoutePaths.adminDashboard;
         if (authState.role.name == 'staff') return RoutePaths.staffDashboard;
+        if (next != null && next.isNotEmpty) return Uri.decodeComponent(next);
         return RoutePaths.home;
       }
 
