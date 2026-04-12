@@ -29,11 +29,12 @@ class CustomerNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider);
+    final isDesktop = Responsive.isDesktop(context);
 
     return Container(
       height: AppSpacing.navBarHeight,
       padding: EdgeInsets.symmetric(
-        horizontal: Responsive.pagePadding(context),
+        horizontal: isDesktop ? Responsive.pagePadding(context) : 8,
       ),
       decoration: BoxDecoration(
         color: AppColors.white,
@@ -44,11 +45,11 @@ class CustomerNavBar extends ConsumerWidget {
       child: Row(
         children: [
           // ── Logo ──
-          _buildLogo(context),
+          _buildLogo(context, isDesktop),
           const Spacer(),
 
-          // ── Navigation Items (desktop only) ──
-          if (Responsive.isDesktop(context)) ...[
+          // ── Desktop: full nav ──
+          if (isDesktop) ...[
             ..._navItems.map((item) => _buildNavItem(context, item)),
             const SizedBox(width: AppSpacing.md),
             ElevatedButton(
@@ -56,16 +57,11 @@ class CustomerNavBar extends ConsumerWidget {
               child: const Text('Book Now'),
             ),
             const SizedBox(width: AppSpacing.sm),
-
-            // Show avatar + notifications when logged in, login button otherwise
             if (user != null) ...[
-              // Notification bell
               _NotificationBell(userId: user.id),
               const SizedBox(width: AppSpacing.xs),
-              // Messages
               _MessagesBadge(userId: user.id),
               const SizedBox(width: AppSpacing.sm),
-              // User avatar dropdown
               _UserAvatarMenu(user: user),
             ] else
               TextButton(
@@ -79,16 +75,17 @@ class CustomerNavBar extends ConsumerWidget {
               ),
           ],
 
-          // ── Mobile hamburger ──
-          if (!Responsive.isDesktop(context)) ...[
+          // ── Mobile/Tablet: compact icons + hamburger ──
+          if (!isDesktop) ...[
             if (user != null) ...[
               _NotificationBell(userId: user.id, compact: true),
               _MessagesBadge(userId: user.id, compact: true),
-              const SizedBox(width: AppSpacing.xs),
             ],
-            IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu),
+                onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+              ),
             ),
           ],
         ],
@@ -96,39 +93,41 @@ class CustomerNavBar extends ConsumerWidget {
     );
   }
 
-  Widget _buildLogo(BuildContext context) {
+  Widget _buildLogo(BuildContext context, bool isDesktop) {
     return GestureDetector(
       onTap: () => context.go(RoutePaths.home),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: AppColors.primary,
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
             ),
             child: const Center(
               child: Text(
                 'S',
                 style: TextStyle(
                   color: AppColors.accent,
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            AppConstants.appName.toUpperCase(),
-            style: AppTypography.titleLarge.copyWith(
-              letterSpacing: 3,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+          if (isDesktop) ...[
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              AppConstants.appName.toUpperCase(),
+              style: AppTypography.titleLarge.copyWith(
+                letterSpacing: 3,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -157,7 +156,7 @@ class CustomerNavBar extends ConsumerWidget {
   }
 }
 
-// ─── User Avatar Menu ──────────────────────────────────────────────
+// ─── User Avatar Menu (Desktop) ────────────────────────────────────
 
 class _UserAvatarMenu extends ConsumerWidget {
   final dynamic user;
@@ -238,38 +237,37 @@ class _UserAvatarMenu extends ConsumerWidget {
           ),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'messages',
           child: Row(
             children: [
               Icon(Icons.chat_bubble_outline,
                   size: 18, color: AppColors.textSecondary),
-              const SizedBox(width: 10),
-              Text('Messages', style: AppTypography.bodyMedium),
+              SizedBox(width: 10),
+              Text('Messages'),
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'notifications',
           child: Row(
             children: [
               Icon(Icons.notifications_outlined,
                   size: 18, color: AppColors.textSecondary),
-              const SizedBox(width: 10),
-              Text('Notifications', style: AppTypography.bodyMedium),
+              SizedBox(width: 10),
+              Text('Notifications'),
             ],
           ),
         ),
         const PopupMenuDivider(),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'logout',
           child: Row(
             children: [
-              const Icon(Icons.logout, size: 18, color: AppColors.error),
-              const SizedBox(width: 10),
+              Icon(Icons.logout, size: 18, color: AppColors.error),
+              SizedBox(width: 10),
               Text('Logout',
-                  style:
-                      AppTypography.bodyMedium.copyWith(color: AppColors.error)),
+                  style: TextStyle(color: AppColors.error)),
             ],
           ),
         ),
@@ -277,10 +275,16 @@ class _UserAvatarMenu extends ConsumerWidget {
       onSelected: (value) {
         switch (value) {
           case 'messages':
-            _showMessagesDialog(context, ref, user.id);
+            showDialog(
+              context: context,
+              builder: (_) => _ConversationsDialog(userId: user.id),
+            );
             break;
           case 'notifications':
-            _showNotificationsDialog(context, ref, user.id);
+            showDialog(
+              context: context,
+              builder: (_) => _NotificationsDialog(userId: user.id),
+            );
             break;
           case 'logout':
             ref.read(authProvider.notifier).logout();
@@ -298,21 +302,6 @@ class _UserAvatarMenu extends ConsumerWidget {
     }
     return name.isNotEmpty ? name[0].toUpperCase() : '?';
   }
-
-  void _showMessagesDialog(BuildContext context, WidgetRef ref, String userId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _ConversationsDialog(userId: userId),
-    );
-  }
-
-  void _showNotificationsDialog(
-      BuildContext context, WidgetRef ref, String userId) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _NotificationsDialog(userId: userId),
-    );
-  }
 }
 
 // ─── Notification Bell ─────────────────────────────────────────────
@@ -328,6 +317,7 @@ class _NotificationBell extends ConsumerWidget {
     final count = countAsync.valueOrNull ?? 0;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         IconButton(
           icon: Icon(
@@ -337,31 +327,35 @@ class _NotificationBell extends ConsumerWidget {
             color: count > 0 ? AppColors.accent : AppColors.textSecondary,
             size: compact ? 20 : 22,
           ),
+          padding: compact ? const EdgeInsets.all(4) : const EdgeInsets.all(8),
+          constraints: compact
+              ? const BoxConstraints(minWidth: 32, minHeight: 32)
+              : null,
           tooltip: 'Notifications',
           onPressed: () {
             showDialog(
               context: context,
-              builder: (ctx) => _NotificationsDialog(userId: userId),
+              builder: (_) => _NotificationsDialog(userId: userId),
             );
           },
         ),
         if (count > 0)
           Positioned(
-            right: 4,
-            top: 4,
+            right: compact ? 0 : 4,
+            top: compact ? 0 : 4,
             child: Container(
-              padding: const EdgeInsets.all(3),
+              padding: const EdgeInsets.all(2),
               decoration: const BoxDecoration(
                 color: AppColors.error,
                 shape: BoxShape.circle,
               ),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
               child: Text(
                 count > 9 ? '9+' : '$count',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.white,
-                  fontSize: 9,
+                  fontSize: 8,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -387,40 +381,43 @@ class _MessagesBadge extends ConsumerWidget {
         0;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
         IconButton(
           icon: Icon(
-            unread > 0
-                ? Icons.chat_bubble
-                : Icons.chat_bubble_outline,
+            unread > 0 ? Icons.chat_bubble : Icons.chat_bubble_outline,
             color: unread > 0 ? AppColors.accent : AppColors.textSecondary,
             size: compact ? 18 : 20,
           ),
+          padding: compact ? const EdgeInsets.all(4) : const EdgeInsets.all(8),
+          constraints: compact
+              ? const BoxConstraints(minWidth: 32, minHeight: 32)
+              : null,
           tooltip: 'Messages',
           onPressed: () {
             showDialog(
               context: context,
-              builder: (ctx) => _ConversationsDialog(userId: userId),
+              builder: (_) => _ConversationsDialog(userId: userId),
             );
           },
         ),
         if (unread > 0)
           Positioned(
-            right: 4,
-            top: 4,
+            right: compact ? 0 : 4,
+            top: compact ? 0 : 4,
             child: Container(
-              padding: const EdgeInsets.all(3),
+              padding: const EdgeInsets.all(2),
               decoration: const BoxDecoration(
                 color: AppColors.error,
                 shape: BoxShape.circle,
               ),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
               child: Text(
                 unread > 9 ? '9+' : '$unread',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: AppColors.white,
-                  fontSize: 9,
+                  fontSize: 8,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -450,12 +447,11 @@ class _NotificationsDialog extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primary,
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                     top: Radius.circular(AppSpacing.radiusLg)),
               ),
               child: Row(
@@ -479,14 +475,13 @@ class _NotificationsDialog extends ConsumerWidget {
                             .copyWith(color: AppColors.accent)),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.white,
-                        size: 20),
+                    icon: const Icon(Icons.close,
+                        color: AppColors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
-            // Content
             Expanded(
               child: notifsAsync.when(
                 loading: () =>
@@ -613,20 +608,19 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
         constraints: const BoxConstraints(maxWidth: 550, maxHeight: 560),
         child: Column(
           children: [
-            // Header
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primary,
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                     top: Radius.circular(AppSpacing.radiusLg)),
               ),
               child: Row(
                 children: [
                   if (_selectedBookingRequestId != null)
                     IconButton(
-                      icon:
-                          const Icon(Icons.arrow_back, color: AppColors.white),
+                      icon: const Icon(Icons.arrow_back,
+                          color: AppColors.white, size: 20),
                       onPressed: () =>
                           setState(() => _selectedBookingRequestId = null),
                     ),
@@ -646,14 +640,13 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon:
-                        const Icon(Icons.close, color: AppColors.white, size: 20),
+                    icon: const Icon(Icons.close,
+                        color: AppColors.white, size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
             ),
-            // Content
             Expanded(
               child: _selectedBookingRequestId == null
                   ? _buildConversationsList()
@@ -685,7 +678,7 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
                 Text('No conversations yet'),
                 SizedBox(height: AppSpacing.xs),
                 Text('Messages from staff will appear here',
-                    style: TextStyle(color: AppColors.textTertiary)),
+                    style: TextStyle(color: AppColors.textTertiary, fontSize: 12)),
               ],
             ),
           );
@@ -716,9 +709,8 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
               title: Row(
                 children: [
                   Expanded(
-                    child: Text(c.otherUserName,
-                        style: AppTypography.labelLarge),
-                  ),
+                      child: Text(c.otherUserName,
+                          style: AppTypography.labelLarge)),
                   if (c.unreadCount > 0)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -739,11 +731,6 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySmall),
-              trailing: Text(
-                _timeAgo(c.lastMessageAt),
-                style: AppTypography.labelSmall
-                    .copyWith(color: AppColors.textTertiary),
-              ),
               onTap: () => setState(
                   () => _selectedBookingRequestId = c.bookingRequestId),
             );
@@ -751,14 +738,6 @@ class _ConversationsDialogState extends ConsumerState<_ConversationsDialog> {
         );
       },
     );
-  }
-
-  String _timeAgo(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    return '${diff.inDays}d';
   }
 }
 
@@ -796,12 +775,10 @@ class _ChatViewState extends ConsumerState<_ChatView> {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Error: $e')),
             data: (messages) {
-              // Mark as read
               ref.read(messagingServiceProvider).markMessagesRead(
                     widget.bookingRequestId,
                     widget.currentUserId,
                   );
-
               if (messages.isEmpty) {
                 return const Center(
                     child: Text('No messages yet. Start the conversation!'));
@@ -818,7 +795,6 @@ class _ChatViewState extends ConsumerState<_ChatView> {
             },
           ),
         ),
-        // Input
         Container(
           padding: const EdgeInsets.all(AppSpacing.sm),
           decoration: BoxDecoration(
@@ -870,7 +846,6 @@ class _ChatViewState extends ConsumerState<_ChatView> {
     setState(() => _sending = true);
 
     try {
-      // Determine recipient — get convos to find the other user
       final convos = ref
           .read(conversationsProvider(widget.currentUserId))
           .valueOrNull;
@@ -882,8 +857,7 @@ class _ChatViewState extends ConsumerState<_ChatView> {
       if (convo == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('No conversation partner found.')),
+            const SnackBar(content: Text('No conversation partner found.')),
           );
         }
         return;
@@ -974,6 +948,8 @@ class _ChatBubble extends StatelessWidget {
   }
 }
 
+// ─── Mobile Drawer ─────────────────────────────────────────────────
+
 /// Mobile navigation drawer for the customer module.
 class CustomerDrawer extends ConsumerWidget {
   const CustomerDrawer({super.key});
@@ -1008,7 +984,9 @@ class CustomerDrawer extends ConsumerWidget {
                       radius: 22,
                       backgroundColor: AppColors.primary,
                       child: Text(
-                        user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
+                        user.name.isNotEmpty
+                            ? user.name[0].toUpperCase()
+                            : '?',
                         style: const TextStyle(
                           color: AppColors.white,
                           fontWeight: FontWeight.w700,
@@ -1023,8 +1001,9 @@ class CustomerDrawer extends ConsumerWidget {
                         children: [
                           Text(user.name, style: AppTypography.titleSmall),
                           Text(user.email,
-                              style: AppTypography.bodySmall
-                                  .copyWith(color: AppColors.textTertiary)),
+                              style: AppTypography.bodySmall.copyWith(
+                                  color: AppColors.textTertiary),
+                              overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
@@ -1052,18 +1031,17 @@ class CustomerDrawer extends ConsumerWidget {
                   ],
                 ),
               ),
-            const Divider(),
+            const Divider(height: 1),
 
             // ── Nav Links ──
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 children: _navItems
                     .map((item) => ListTile(
                           title: Text(item.label),
                           onTap: () {
-                            Navigator.pop(context);
+                            Navigator.of(context).pop();
                             context.go(item.path);
                           },
                         ))
@@ -1071,7 +1049,8 @@ class CustomerDrawer extends ConsumerWidget {
               ),
             ),
 
-            // ── CTA ──
+            // ── CTA & Auth ──
+            const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
@@ -1079,7 +1058,7 @@ class CustomerDrawer extends ConsumerWidget {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.pop(context);
+                      Navigator.of(context).pop();
                       context.go(RoutePaths.booking);
                     },
                     child: const Text('Book Now'),
@@ -1088,17 +1067,22 @@ class CustomerDrawer extends ConsumerWidget {
                   if (user != null)
                     OutlinedButton.icon(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.of(context).pop();
                         ref.read(authProvider.notifier).logout();
                         context.go(RoutePaths.home);
                       },
-                      icon: const Icon(Icons.logout, size: 18),
-                      label: const Text('Logout'),
+                      icon: const Icon(Icons.logout,
+                          size: 18, color: AppColors.error),
+                      label: const Text('Logout',
+                          style: TextStyle(color: AppColors.error)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.error),
+                      ),
                     )
                   else
                     OutlinedButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.of(context).pop();
                         context.go(RoutePaths.login);
                       },
                       child: const Text('Login / Sign Up'),
