@@ -232,7 +232,53 @@ final bookingsProvider = allBookingsProvider;
 final guestsProvider = allGuestsProvider;
 final invoicesProvider = allInvoicesProvider;
 final paymentsProvider = allPaymentsProvider;
-final reviewsProvider = allReviewsProvider;
+/// Static showcase reviews with Pakistani guest names.
+/// These are always displayed alongside any dynamic reviews from the database.
+final _staticReviews = [
+  Review(
+    id: 'static-rev-1',
+    guestName: 'Ahmed Raza',
+    rating: 5.0,
+    comment:
+        'Absolutely stunning experience! The room was immaculate, staff was incredibly courteous, and the view from the suite was breathtaking. Will definitely book again for our anniversary.',
+    createdAt: DateTime(2026, 2, 14),
+  ),
+  Review(
+    id: 'static-rev-2',
+    guestName: 'Ayesha Khan',
+    rating: 4.5,
+    comment:
+        'Very comfortable stay with excellent amenities. The breakfast buffet was outstanding and the concierge went above and beyond to arrange our city tour. Highly recommended for families!',
+    createdAt: DateTime(2026, 1, 22),
+  ),
+  Review(
+    id: 'static-rev-3',
+    guestName: 'Bilal Hussain',
+    rating: 5.0,
+    comment:
+        'First-class hospitality from check-in to check-out. The Deluxe room was spacious and well-appointed. The rooftop dining experience was unforgettable. A hidden gem in the city!',
+    createdAt: DateTime(2025, 12, 5),
+  ),
+  Review(
+    id: 'static-rev-4',
+    guestName: 'Fatima Noor',
+    rating: 4.0,
+    comment:
+        'Beautiful property with modern interiors. Loved the attention to detail in every corner. The spa service was world-class. Perfect place for a weekend getaway.',
+    createdAt: DateTime(2025, 11, 18),
+  ),
+];
+
+final reviewsProvider = FutureProvider<List<Review>>((ref) async {
+  try {
+    final dbReviews = await ref.watch(allReviewsProvider.future);
+    // Merge: DB reviews first, then static ones
+    return [...dbReviews, ..._staticReviews];
+  } catch (_) {
+    // If DB fails, still show static reviews
+    return _staticReviews;
+  }
+});
 final staffListProvider = allStaffProvider;
 final bookingRequestsProvider = allBookingRequestsProvider;
 final paymentProofsProvider = allPaymentProofsProvider;

@@ -238,7 +238,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildReviewsPreview(BuildContext context, WidgetRef ref) {
-    final reviewsAsync = ref.watch(allReviewsProvider);
+    final reviewsAsync = ref.watch(reviewsProvider);
 
     return Container(
       color: AppColors.surfaceVariant,

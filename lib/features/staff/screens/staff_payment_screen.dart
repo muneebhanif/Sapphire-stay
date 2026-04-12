@@ -211,20 +211,29 @@ class StaffPaymentScreen extends ConsumerWidget {
                           const SizedBox(height: AppSpacing.sm),
                           
                           // Image preview
-                          Container(
-                            height: 150,
-                            width: 150,
-                            decoration: BoxDecoration(
-                              border: Border.all(color: AppColors.border),
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-                              child: Image.network(
-                                proof.screenshotUrl,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                  const Center(child: Icon(Icons.broken_image, color: AppColors.textTertiary)),
+                          GestureDetector(
+                            onTap: () => _showImageDialog(context, proof.screenshotUrl),
+                            child: Container(
+                              height: 150,
+                              width: 150,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: AppColors.border),
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                                child: Image.network(
+                                  proof.screenshotUrl,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    );
+                                  },
+                                  errorBuilder: (context, error, stackTrace) =>
+                                    const Center(child: Icon(Icons.broken_image, color: AppColors.textTertiary)),
+                                ),
                               ),
                             ),
                           ),
@@ -302,6 +311,37 @@ class StaffPaymentScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+
+  void _showImageDialog(BuildContext context, String url) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.broken_image, size: 48, color: AppColors.textTertiary),
+                      SizedBox(height: AppSpacing.sm),
+                      Text('Failed to load image'),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   IconData _methodIcon(String method) {

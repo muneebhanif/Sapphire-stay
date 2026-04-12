@@ -25,6 +25,7 @@ export default defineSchema({
   rooms: defineTable({
     roomNumber: v.string(),
     type: v.string(),
+    description: v.optional(v.string()),
     floor: v.number(),
     capacity: v.number(),
     pricePkr: v.number(),

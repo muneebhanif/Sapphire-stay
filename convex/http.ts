@@ -53,7 +53,7 @@ http.route({
         headers: { "Access-Control-Allow-Origin": "*" },
       });
     }
-    const blob = await ctx.storage.get(storageId as string);
+    const blob = await ctx.storage.get(storageId as any);
     if (blob === null) {
       return new Response("Image not found", {
         status: 404,
@@ -62,7 +62,27 @@ http.route({
     }
     return new Response(blob, {
       status: 200,
-      headers: { "Access-Control-Allow-Origin": "*" },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Content-Type": blob.type || "image/jpeg",
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
+  }),
+});
+
+http.route({
+  path: "/getImage",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Max-Age": "86400",
+      },
     });
   }),
 });

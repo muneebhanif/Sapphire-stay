@@ -87,6 +87,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
     final capacityCtrl = TextEditingController(text: '2');
     final priceCtrl = TextEditingController(text: '5000');
     final amenitiesCtrl = TextEditingController(text: 'WiFi, TV, AC');
+    final descriptionCtrl = TextEditingController();
     String selectedType = 'standard';
     final formKey = GlobalKey<FormState>();
     List<Uint8List> imageBytesList = [];
@@ -140,7 +141,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
-                      initialValue: selectedType,
+                      value: selectedType,
                       decoration: const InputDecoration(
                         labelText: 'Room Type',
                       ),
@@ -200,6 +201,13 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       hint: 'WiFi, TV, AC, Mini Bar',
                       controller: amenitiesCtrl,
                       prefixIcon: Icons.star_outline,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SSTextField(
+                      label: 'Description (Optional)',
+                      hint: 'Describe this room...',
+                      controller: descriptionCtrl,
+                      maxLines: 3,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text('Room Images (Optional, up to 6)', style: AppTypography.labelLarge),
@@ -318,8 +326,9 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                           orElse: () => RoomType.standard,
                         ),
                         name: 'Room ${numberCtrl.text.trim()}',
-                        description:
-                            'Experience luxury in our beautifully appointed $selectedType room.',
+                        description: descriptionCtrl.text.trim().isNotEmpty
+                            ? descriptionCtrl.text.trim()
+                            : 'Experience luxury in our beautifully appointed $selectedType room.',
                         pricePerNight:
                             double.tryParse(priceCtrl.text.trim()) ?? 5000,
                         capacity:
@@ -384,6 +393,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
     final capacityCtrl = TextEditingController(text: '${room.capacity}');
     final priceCtrl = TextEditingController(text: room.pricePerNight.toStringAsFixed(0));
     final amenitiesCtrl = TextEditingController(text: room.amenities.join(', '));
+    final descriptionCtrl = TextEditingController(text: room.description);
     String selectedType = room.type.name;
     final formKey = GlobalKey<FormState>();
 
@@ -444,7 +454,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
-                      initialValue: selectedType,
+                      value: selectedType,
                       decoration: const InputDecoration(labelText: 'Room Type'),
                       items: const [
                         DropdownMenuItem(value: 'standard', child: Text('Standard')),
@@ -493,6 +503,13 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       hint: 'WiFi, TV, AC',
                       controller: amenitiesCtrl,
                       prefixIcon: Icons.star_outline,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    SSTextField(
+                      label: 'Description (Optional)',
+                      hint: 'Describe this room...',
+                      controller: descriptionCtrl,
+                      maxLines: 3,
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Row(
@@ -639,7 +656,9 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                           orElse: () => room.type,
                         ),
                         name: 'Room ${numberCtrl.text.trim()}',
-                        description: room.description,
+                        description: descriptionCtrl.text.trim().isNotEmpty
+                            ? descriptionCtrl.text.trim()
+                            : room.description,
                         pricePerNight: double.tryParse(priceCtrl.text.trim()) ?? room.pricePerNight,
                         capacity: int.tryParse(capacityCtrl.text.trim()) ?? room.capacity,
                         floor: int.tryParse(floorCtrl.text.trim()) ?? room.floor,

@@ -324,7 +324,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
           loading: () => const LinearProgressIndicator(color: AppColors.accent),
           error: (e, _) => Text('Error loading rooms: $e'),
           data: (rooms) => DropdownButtonFormField<String>(
-            initialValue: _selectedRoomId,
+            value: _selectedRoomId,
             decoration: const InputDecoration(
               hintText: 'Choose a room',
             ),

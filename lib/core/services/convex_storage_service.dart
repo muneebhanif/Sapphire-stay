@@ -53,6 +53,7 @@ class ConvexStorageService {
 
   /// Build a URL that serves the image for the given storageId.
   String getImageUrl(String storageId) {
-    return '${ConvexEnv.httpUrl}/getImage?storageId=$storageId';
+    final encoded = Uri.encodeComponent(storageId);
+    return '${ConvexEnv.httpUrl}/getImage?storageId=$encoded';
   }
 }

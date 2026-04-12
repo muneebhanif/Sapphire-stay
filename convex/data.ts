@@ -61,7 +61,7 @@ const mapRoomData = (r, featuredIds = new Set<string>()) => ({
   number: r.roomNumber,
   type: r.type,
   name: `Room ${r.roomNumber}`,
-  description: `Experience luxury in our beautifully appointed ${r.type} room.`,
+  description: r.description || `Experience luxury in our beautifully appointed ${r.type} room.`,
   price_per_night: r.pricePkr, // Send PKR directly, no conversion
   capacity: r.capacity,
   floor: r.floor,
@@ -119,6 +119,7 @@ export const createRoom = mutation({
   args: {
     roomNumber: v.string(),
     type: v.string(),
+    description: v.optional(v.string()),
     floor: v.number(),
     capacity: v.number(),
     pricePkr: v.number(),
@@ -128,7 +129,7 @@ export const createRoom = mutation({
   },
   handler: async (ctx, args) => {
     const imageUrls = normalizeImageUrls(args.imageUrls);
-    const id = await ctx.db.insert("rooms", {
+    const insertData: any = {
       roomNumber: args.roomNumber,
       type: args.type,
       floor: args.floor,
@@ -138,7 +139,11 @@ export const createRoom = mutation({
       amenities: args.amenities,
       imageUrls,
       createdAt: Date.now(),
-    });
+    };
+    if (args.description) {
+      insertData.description = args.description;
+    }
+    const id = await ctx.db.insert("rooms", insertData);
     const r = await ctx.db.get(id);
     return mapRoomData(r);
   },
@@ -149,6 +154,7 @@ export const updateRoom = mutation({
     id: v.id("rooms"),
     roomNumber: v.optional(v.string()),
     type: v.optional(v.string()),
+    description: v.optional(v.string()),
     floor: v.optional(v.number()),
     capacity: v.optional(v.number()),
     pricePkr: v.optional(v.number()),

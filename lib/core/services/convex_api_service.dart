@@ -311,6 +311,7 @@ class ConvexRoomService implements RoomService {
     final result = await _client.mutation('data:createRoom', {
       'roomNumber': room.number,
       'type': room.type.name,
+      'description': room.description,
       'floor': room.floor,
       'capacity': room.capacity,
       'pricePkr': room.pricePerNight,
@@ -327,6 +328,7 @@ class ConvexRoomService implements RoomService {
       'id': room.id,
       'roomNumber': room.number,
       'type': room.type.name,
+      'description': room.description,
       'floor': room.floor,
       'capacity': room.capacity,
       'pricePkr': room.pricePerNight,
