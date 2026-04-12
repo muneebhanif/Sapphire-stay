@@ -219,6 +219,79 @@ export const getAllBookings = query({
   }
 });
 
+export const createWalkInBooking = mutation({
+  args: {
+    guestName: v.string(),
+    guestEmail: v.string(),
+    guestPhone: v.string(),
+    roomId: v.id("rooms"),
+    checkIn: v.number(),
+    checkOut: v.number(),
+    guestsCount: v.number(),
+    totalPkr: v.number(),
+    staffId: v.optional(v.id("users")),
+  },
+  handler: async (ctx, args) => {
+    // 1. Create or find guest
+    let guestId: any = null;
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_email", q => q.eq("email", args.guestEmail))
+      .first();
+    
+    if (existing) {
+      guestId = existing._id;
+    } else {
+      guestId = await ctx.db.insert("users", {
+        role: "customer",
+        name: args.guestName,
+        email: args.guestEmail,
+        phone: args.guestPhone,
+        isActive: true,
+        createdAt: Date.now(),
+      });
+    }
+
+    // 2. Create the booking directly
+    const bookingId = await ctx.db.insert("bookings", {
+      customerId: guestId,
+      roomId: args.roomId,
+      checkIn: args.checkIn,
+      checkOut: args.checkOut,
+      totalPkr: args.totalPkr,
+      status: "confirmed",
+      createdAt: Date.now(),
+      staffId: args.staffId,
+    });
+
+    // 3. Generate paid invoice for walk-in
+    const subtotal = Math.round(args.totalPkr / 1.16);
+    const tax = args.totalPkr - subtotal;
+    const invoiceId = await ctx.db.insert("invoices", {
+      bookingId,
+      subtotalPkr: subtotal,
+      taxPkr: tax,
+      totalPkr: args.totalPkr,
+      status: "paid",
+      issuedAt: Date.now(),
+      dueAt: Date.now(),
+    });
+
+    // 4. Record cash payment
+    await ctx.db.insert("payments", {
+      bookingId,
+      invoiceId,
+      amountPkr: args.totalPkr,
+      method: "cash",
+      status: "completed",
+      recordedBy: args.staffId,
+      createdAt: Date.now(),
+    });
+
+    return bookingId;
+  }
+});
+
 // ───────────────────────────────────────────────────────────
 // GUEST QUERIES + MUTATIONS
 // ───────────────────────────────────────────────────────────
@@ -424,6 +497,27 @@ export const deactivateStaff = mutation({
   args: { id: v.id("users") },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, { isActive: false });
+  },
+});
+
+export const updateStaff = mutation({
+  args: {
+    id: v.id("users"),
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+    password: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const updateData: any = {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+    };
+    if (args.password) {
+      updateData.password = args.password;
+    }
+    await ctx.db.patch(args.id, updateData);
   },
 });
 

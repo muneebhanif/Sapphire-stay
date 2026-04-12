@@ -8,9 +8,22 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/responsive.dart';
 import '../../../core/widgets/ss_button.dart';
 
+import '../../../core/utils/currency_utils.dart';
+
 /// Booking confirmation screen shown after successful submission.
 class BookingConfirmationScreen extends StatelessWidget {
-  const BookingConfirmationScreen({super.key});
+  final int? totalPkr;
+  final int? guestsCount;
+  final String? roomName;
+  final String? guestName;
+
+  const BookingConfirmationScreen({
+    super.key,
+    this.totalPkr,
+    this.guestsCount,
+    this.roomName,
+    this.guestName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -75,6 +88,41 @@ class BookingConfirmationScreen extends StatelessWidget {
                       letterSpacing: 2,
                     ),
                   ),
+                  const SizedBox(height: AppSpacing.md),
+                  const Divider(),
+                  const SizedBox(height: AppSpacing.md),
+                  if (guestName != null) ...[
+                    _buildInvoiceRow('Guest Name:', guestName!),
+                    const SizedBox(height: AppSpacing.xs),
+                  ],
+                  if (roomName != null) ...[
+                    _buildInvoiceRow('Room:', roomName!),
+                    const SizedBox(height: AppSpacing.xs),
+                  ],
+                  if (guestsCount != null) ...[
+                    _buildInvoiceRow('Guests:', '$guestsCount'),
+                    const SizedBox(height: AppSpacing.xs),
+                  ],
+                  if (totalPkr != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    _buildInvoiceRow('Total Amount:', CurrencyUtils.formatPkr(totalPkr!), isHighlight: true),
+                    const SizedBox(height: AppSpacing.md),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.pending_actions, color: AppColors.error, size: 20),
+                          SizedBox(width: AppSpacing.sm),
+                          Text('Payment Verification Pending', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Please save this reference number for your records.',
@@ -159,6 +207,23 @@ class BookingConfirmationScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInvoiceRow(String label, String value, {bool isHighlight = false}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal,
+            color: isHighlight ? AppColors.accent : null,
+            fontSize: isHighlight ? 16 : null,
+          ),
+        ),
+      ],
     );
   }
 }

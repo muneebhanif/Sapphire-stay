@@ -12,6 +12,7 @@ import '../../../core/widgets/ss_error_state.dart';
 import '../../../core/widgets/ss_empty_state.dart';
 import '../../../models/booking.dart';
 import '../../../providers/providers.dart';
+import '../../admin/widgets/add_booking_dialog.dart';
 
 /// Staff bookings management screen.
 class StaffBookingScreen extends ConsumerStatefulWidget {
@@ -65,6 +66,17 @@ class _StaffBookingScreenState extends ConsumerState<StaffBookingScreen>
                     ),
                   ],
                 ),
+              ),
+              SSButton(
+                label: 'New Booking',
+                icon: Icons.add,
+                size: SSButtonSize.small,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => const AddBookingDialog(),
+                  );
+                },
               ),
             ],
           ),

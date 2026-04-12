@@ -225,9 +225,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: RoutePaths.bookingConfirmation,
-            pageBuilder: (context, state) => const NoTransitionPage(
-              child: BookingConfirmationScreen(),
-            ),
+            pageBuilder: (context, state) {
+              final extra = state.extra as Map<String, dynamic>? ?? {};
+              return NoTransitionPage(
+                child: BookingConfirmationScreen(
+                  totalPkr: extra['totalPkr'] as int?,
+                  guestsCount: extra['guestsCount'] as int?,
+                  roomName: extra['roomName'] as String?,
+                  guestName: extra['guestName'] as String?,
+                ),
+              );
+            },
           ),
           GoRoute(
             path: RoutePaths.gallery,

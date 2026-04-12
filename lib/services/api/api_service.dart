@@ -48,6 +48,17 @@ abstract class BookingService {
   Future<Booking> createBooking(Booking booking);
   Future<Booking> updateBookingStatus(String id, BookingStatus status);
   Future<List<Booking>> getBookingsByDate(DateTime date);
+  Future<void> createWalkInBooking({
+    required String guestName,
+    required String guestEmail,
+    required String guestPhone,
+    required String roomId,
+    required DateTime checkIn,
+    required DateTime checkOut,
+    required int guestsCount,
+    required int totalPkr,
+    String? staffId,
+  });
   Future<List<Booking>> getTodayCheckIns();
   Future<List<Booking>> getTodayCheckOuts();
 }
@@ -95,8 +106,8 @@ abstract class ReportService {
 // ─── Staff Management (Admin only) ────────────────────────────────
 abstract class StaffManagementService {
   Future<List<User>> getAllStaff();
-  Future<User> createStaff(User staff);
-  Future<User> updateStaff(User staff);
+  Future<User> createStaff(User staff, {String? password});
+  Future<User> updateStaff(User staff, {String? password});
   Future<void> deactivateStaff(String id);
 }
 

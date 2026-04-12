@@ -794,7 +794,15 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
 
     if (mounted) {
       setState(() => _isSubmitting = false);
-      context.go(RoutePaths.bookingConfirmation);
+      context.go(
+        RoutePaths.bookingConfirmation,
+        extra: {
+          'totalPkr': totalPkr,
+          'guestsCount': _guests,
+          'roomName': '${selectedRoom.number} - ${selectedRoom.type.name}',
+          'guestName': _nameController.text.trim(),
+        },
+      );
     }
   }
 }

@@ -371,6 +371,31 @@ class ConvexBookingService implements BookingService {
   Future<Booking> createBooking(Booking booking) async => booking;
 
   @override
+  Future<void> createWalkInBooking({
+    required String guestName,
+    required String guestEmail,
+    required String guestPhone,
+    required String roomId,
+    required DateTime checkIn,
+    required DateTime checkOut,
+    required int guestsCount,
+    required int totalPkr,
+    String? staffId,
+  }) async {
+    await _client.mutation('data:createWalkInBooking', {
+      'guestName': guestName,
+      'guestEmail': guestEmail,
+      'guestPhone': guestPhone,
+      'roomId': roomId,
+      'checkIn': checkIn.millisecondsSinceEpoch,
+      'checkOut': checkOut.millisecondsSinceEpoch,
+      'guestsCount': guestsCount,
+      'totalPkr': totalPkr,
+      if (staffId != null) 'staffId': staffId,
+    });
+  }
+
+  @override
   Future<Booking> updateBookingStatus(
       String id, BookingStatus status) async {
     final all = await getAllBookings();
@@ -566,17 +591,27 @@ class ConvexStaffManagementService implements StaffManagementService {
   }
 
   @override
-  Future<User> createStaff(User user) async {
+  Future<User> createStaff(User user, {String? password}) async {
     await _client.mutation('data:createStaff', {
       'name': user.name,
       'email': user.email,
       'phone': user.phone,
+      if (password != null && password.isNotEmpty) 'password': password,
     });
     return user;
   }
 
   @override
-  Future<User> updateStaff(User user) async => user;
+  Future<User> updateStaff(User user, {String? password}) async {
+    await _client.mutation('data:updateStaff', {
+      'id': user.id,
+      'name': user.name,
+      'email': user.email,
+      'phone': user.phone,
+      if (password != null && password.isNotEmpty) 'password': password,
+    });
+    return user;
+  }
 
   @override
   Future<void> deactivateStaff(String id) async {

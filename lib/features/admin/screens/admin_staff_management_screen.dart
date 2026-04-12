@@ -165,7 +165,9 @@ class AdminStaffManagementScreen extends ConsumerWidget {
                                     child: Text('Delete')),
                               ],
                               onSelected: (action) async {
-                                if (action == 'deactivate') {
+                                if (action == 'edit') {
+                                  _showAddStaffDialog(context, ref, userToEdit: user);
+                                } else if (action == 'deactivate') {
                                   try {
                                     await ref.read(staffMgmtServiceProvider).deactivateStaff(user.id);
                                     ref.invalidate(staffListProvider);
@@ -202,46 +204,59 @@ class AdminStaffManagementScreen extends ConsumerWidget {
     );
   }
 
-  void _showAddStaffDialog(BuildContext context, WidgetRef ref) {
-    final nameCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
+  void _showAddStaffDialog(BuildContext context, WidgetRef ref, {User? userToEdit}) {
+    final isEdit = userToEdit != null;
+    final nameCtrl = TextEditingController(text: userToEdit?.name ?? '');
+    final emailCtrl = TextEditingController(text: userToEdit?.email ?? '');
+    final phoneCtrl = TextEditingController(text: userToEdit?.phone ?? '');
+    final passCtrl = TextEditingController(); // For new passwords
     final formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Staff Member'),
+        title: Text(isEdit ? 'Edit Staff Member' : 'Add Staff Member'),
         content: SizedBox(
           width: 400,
           child: Form(
             key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SSTextField(
-                  label: 'Full Name',
-                  hint: 'e.g. James Smith',
-                  controller: nameCtrl,
-                  prefixIcon: Icons.person_outline,
-                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                SSTextField(
-                  label: 'Email',
-                  hint: 'staff@email.com',
-                  controller: emailCtrl,
-                  prefixIcon: Icons.email_outlined,
-                  validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                SSTextField(
-                  label: 'Phone',
-                  hint: '+920300000000',
-                  controller: phoneCtrl,
-                  prefixIcon: Icons.phone_outlined,
-                ),
-              ],
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SSTextField(
+                    label: 'Full Name',
+                    hint: 'e.g. James Smith',
+                    controller: nameCtrl,
+                    prefixIcon: Icons.person_outline,
+                    validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SSTextField(
+                    label: 'Email',
+                    hint: 'staff@email.com',
+                    controller: emailCtrl,
+                    prefixIcon: Icons.email_outlined,
+                    validator: (v) => v?.trim().isEmpty ?? true ? 'Required' : null,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SSTextField(
+                    label: 'Phone',
+                    hint: '+920300000000',
+                    controller: phoneCtrl,
+                    prefixIcon: Icons.phone_outlined,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  SSTextField(
+                    label: isEdit ? 'New Password (Optional)' : 'Password',
+                    hint: '••••••••',
+                    controller: passCtrl,
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: true,
+                    validator: (v) => !isEdit && (v?.isEmpty ?? true) ? 'Required' : null,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -254,22 +269,40 @@ class AdminStaffManagementScreen extends ConsumerWidget {
             onPressed: () async {
               if (!(formKey.currentState?.validate() ?? false)) return;
               try {
-                await ref.read(staffMgmtServiceProvider).createStaff(
-                  User(
-                    id: '',
-                    name: nameCtrl.text.trim(),
-                    email: emailCtrl.text.trim(),
-                    phone: phoneCtrl.text.trim(),
-                    role: UserRole.staff,
-                    isActive: true,
-                    createdAt: DateTime.now(),
-                  ),
-                );
+                if (isEdit) {
+                  await ref.read(staffMgmtServiceProvider).updateStaff(
+                    User(
+                      id: userToEdit.id,
+                      name: nameCtrl.text.trim(),
+                      email: emailCtrl.text.trim(),
+                      phone: phoneCtrl.text.trim(),
+                      role: userToEdit.role,
+                      isActive: userToEdit.isActive,
+                      createdAt: userToEdit.createdAt,
+                    ),
+                    password: passCtrl.text.trim().isNotEmpty ? passCtrl.text.trim() : null,
+                  );
+                } else {
+                  await ref.read(staffMgmtServiceProvider).createStaff(
+                    User(
+                      id: '',
+                      name: nameCtrl.text.trim(),
+                      email: emailCtrl.text.trim(),
+                      phone: phoneCtrl.text.trim(),
+                      role: UserRole.staff,
+                      isActive: true,
+                      createdAt: DateTime.now(),
+                    ),
+                    password: passCtrl.text.trim(),
+                  );
+                }
                 ref.invalidate(staffListProvider);
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Staff ${nameCtrl.text} added!'), backgroundColor: AppColors.success),
+                    SnackBar(
+                        content: Text(isEdit ? 'Staff updated successfully!' : 'Staff ${nameCtrl.text} added!'),
+                        backgroundColor: AppColors.success),
                   );
                 }
               } catch (e) {
@@ -280,7 +313,7 @@ class AdminStaffManagementScreen extends ConsumerWidget {
                 }
               }
             },
-            child: const Text('Add Staff'),
+            child: Text(isEdit ? 'Save Changes' : 'Add Staff'),
           ),
         ],
       ),
