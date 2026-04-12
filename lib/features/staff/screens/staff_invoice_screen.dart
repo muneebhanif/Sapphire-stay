@@ -1,5 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -11,6 +15,7 @@ import '../../../core/widgets/ss_error_state.dart';
 import '../../../core/widgets/ss_empty_state.dart';
 import '../../../core/widgets/ss_button.dart';
 import '../../../providers/providers.dart';
+import '../../../models/invoice.dart';
 import '../../admin/widgets/add_invoice_dialog.dart';
 
 /// Staff invoice management screen.
@@ -123,14 +128,18 @@ class StaffInvoiceScreen extends ConsumerWidget {
                                     value: 'markPaid',
                                     child: Text('Mark as Paid')),
                               ],
-                              onSelected: (action) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Action "$action" on invoice ${inv.id.substring(0, 8)}',
+                              onSelected: (action) async {
+                                if (action == 'print') {
+                                  await _printInvoice(inv, context);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Action "$action" on invoice ${inv.id.substring(0, 8)}',
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                }
                               },
                             ),
                           ),
@@ -149,4 +158,115 @@ class StaffInvoiceScreen extends ConsumerWidget {
 
   String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  Future<void> _printInvoice(Invoice inv, BuildContext context) async {
+    try {
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Padding(
+              padding: const pw.EdgeInsets.all(32),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Sapphire Stay Hotel', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold, color: PdfColors.teal)),
+                      pw.Text('INVOICE', style: pw.TextStyle(fontSize: 24, color: PdfColors.grey700)),
+                    ],
+                  ),
+                  pw.SizedBox(height: 20),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Billed To:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                          pw.Text(inv.guestName),
+                          pw.Text('Invoice ID: ${inv.id.substring(0, 8)}'),
+                        ],
+                      ),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text('Date issued: ${_fmtDate(inv.issueDate)}'),
+                          pw.Text('Due date: ${inv.dueDate != null ? _fmtDate(inv.dueDate!) : 'N/A'}'),
+                          pw.Text('Status: ${inv.status.name.toUpperCase()}'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  pw.SizedBox(height: 30),
+                  pw.Divider(color: PdfColors.grey400),
+                  pw.SizedBox(height: 10),
+                  pw.Row(
+                    children: [
+                      pw.Expanded(flex: 3, child: pw.Text('DESCRIPTION', style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                      pw.Expanded(flex: 1, child: pw.Text('QTY', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                      pw.Expanded(flex: 2, child: pw.Text('PRICE', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                      pw.Expanded(flex: 2, child: pw.Text('AMOUNT', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                    ],
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Divider(color: PdfColors.grey400),
+                  pw.SizedBox(height: 10),
+                  ...inv.lineItems.map((item) => pw.Padding(
+                        padding: const pw.EdgeInsets.symmetric(vertical: 4),
+                        child: pw.Row(
+                          children: [
+                            pw.Expanded(flex: 3, child: pw.Text(item.description)),
+                            pw.Expanded(flex: 1, child: pw.Text('${item.quantity}', textAlign: pw.TextAlign.right)),
+                            pw.Expanded(flex: 2, child: pw.Text(CurrencyUtils.formatPkr(item.unitPrice.round()), textAlign: pw.TextAlign.right)),
+                            pw.Expanded(flex: 2, child: pw.Text(CurrencyUtils.formatPkr(item.total.round()), textAlign: pw.TextAlign.right)),
+                          ],
+                        ),
+                      )),
+                  pw.SizedBox(height: 20),
+                  pw.Divider(color: PdfColors.grey400),
+                  pw.SizedBox(height: 10),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.end,
+                    children: [
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.end,
+                        children: [
+                          pw.Text('Subtotal: ${CurrencyUtils.formatPkr(inv.subtotal.round())}'),
+                          pw.Text('Tax: ${CurrencyUtils.formatPkr(inv.tax.round())}'),
+                          pw.SizedBox(height: 5),
+                          pw.Text(
+                            'TOTAL: ${CurrencyUtils.formatPkr(inv.total.round())}',
+                            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  pw.Spacer(),
+                  pw.Center(
+                    child: pw.Text('Thank you for choosing Sapphire Stay Hotel!', style: pw.TextStyle(fontStyle: pw.FontStyle.italic, color: PdfColors.grey600)),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+        name: 'Invoice_${inv.id.substring(0, 8)}.pdf',
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate PDF: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
 }

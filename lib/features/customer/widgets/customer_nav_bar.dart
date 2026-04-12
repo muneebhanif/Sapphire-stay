@@ -166,50 +166,58 @@ class _UserAvatarMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final initials = _getInitials(user.name);
 
-    return PopupMenuButton<String>(
-      offset: const Offset(0, 48),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.08),
+    return MenuAnchor(
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return InkWell(
+          onTap: () {
+            if (controller.isOpen) {
+              controller.close();
+            } else {
+              controller.open();
+            }
+          },
           borderRadius: BorderRadius.circular(100),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircleAvatar(
-              radius: 14,
-              backgroundColor: AppColors.primary,
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  color: AppColors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(100),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.primary,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      color: AppColors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 6),
+                Text(
+                  user.name.split(' ').first,
+                  style: AppTypography.labelMedium.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 2),
+                Icon(Icons.keyboard_arrow_down,
+                    size: 18, color: AppColors.primary.withValues(alpha: 0.6)),
+              ],
             ),
-            const SizedBox(width: 6),
-            Text(
-              user.name.split(' ').first,
-              style: AppTypography.labelMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down,
-                size: 18, color: AppColors.primary.withValues(alpha: 0.6)),
-          ],
-        ),
-      ),
-      itemBuilder: (context) => [
-        PopupMenuItem(
-          enabled: false,
+          ),
+        );
+      },
+      menuChildren: [
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -217,7 +225,7 @@ class _UserAvatarMenu extends ConsumerWidget {
               Text(user.email,
                   style: AppTypography.bodySmall
                       .copyWith(color: AppColors.textTertiary)),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -236,64 +244,41 @@ class _UserAvatarMenu extends ConsumerWidget {
             ],
           ),
         ),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-          value: 'messages',
-          child: Row(
-            children: [
-              Icon(Icons.chat_bubble_outline,
-                  size: 18, color: AppColors.textSecondary),
-              SizedBox(width: 10),
-              Text('Messages'),
-            ],
-          ),
-        ),
-        const PopupMenuItem(
-          value: 'notifications',
-          child: Row(
-            children: [
-              Icon(Icons.notifications_outlined,
-                  size: 18, color: AppColors.textSecondary),
-              SizedBox(width: 10),
-              Text('Notifications'),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-          value: 'logout',
-          child: Row(
-            children: [
-              Icon(Icons.logout, size: 18, color: AppColors.error),
-              SizedBox(width: 10),
-              Text('Logout',
-                  style: TextStyle(color: AppColors.error)),
-            ],
-          ),
-        ),
-      ],
-      onSelected: (value) async {
-        switch (value) {
-          case 'messages':
+        const Divider(),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.chat_bubble_outline,
+              size: 18, color: AppColors.textSecondary),
+          child: const Text('Messages'),
+          onPressed: () {
             showDialog(
               context: context,
               builder: (_) => _ConversationsDialog(userId: user.id),
             );
-            break;
-          case 'notifications':
+          },
+        ),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.notifications_outlined,
+              size: 18, color: AppColors.textSecondary),
+          child: const Text('Notifications'),
+          onPressed: () {
             showDialog(
               context: context,
               builder: (_) => _NotificationsDialog(userId: user.id),
             );
-            break;
-          case 'logout':
+          },
+        ),
+        const Divider(),
+        MenuItemButton(
+          leadingIcon: const Icon(Icons.logout, size: 18, color: AppColors.error),
+          child: const Text('Logout', style: TextStyle(color: AppColors.error)),
+          onPressed: () async {
             await ref.read(authProvider.notifier).logout();
             if (context.mounted) {
               context.go(RoutePaths.home);
             }
-            break;
-        }
-      },
+          },
+        ),
+      ],
     );
   }
 
