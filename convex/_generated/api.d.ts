@@ -13,6 +13,7 @@ import type * as authQueries from "../authQueries.js";
 import type * as bookingRequests from "../bookingRequests.js";
 import type * as data from "../data.js";
 import type * as http from "../http.js";
+import type * as messaging from "../messaging.js";
 import type * as seed from "../seed.js";
 import type * as staffMessages from "../staffMessages.js";
 import type * as users from "../users.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   bookingRequests: typeof bookingRequests;
   data: typeof data;
   http: typeof http;
+  messaging: typeof messaging;
   seed: typeof seed;
   staffMessages: typeof staffMessages;
   users: typeof users;

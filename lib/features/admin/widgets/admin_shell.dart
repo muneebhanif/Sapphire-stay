@@ -24,6 +24,7 @@ class AdminShell extends ConsumerWidget {
     _NavItem(Icons.payment_outlined, 'Payments', RoutePaths.adminPayments),
     _NavItem(Icons.bar_chart, 'Reports', RoutePaths.adminReports),
     _NavItem(Icons.badge_outlined, 'Staff', RoutePaths.adminStaff),
+    _NavItem(Icons.forum_outlined, 'Messages', RoutePaths.adminMessaging),
   ];
 
   @override

@@ -167,4 +167,22 @@ export default defineSchema({
     value: v.string(),
     createdAt: v.number(),
   }).index("by_key", ["key"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.union(
+      v.literal("booking_approved"),
+      v.literal("booking_rejected"),
+      v.literal("payment_verified"),
+      v.literal("new_message"),
+      v.literal("general"),
+    ),
+    title: v.string(),
+    body: v.string(),
+    bookingRequestId: v.optional(v.id("bookingRequests")),
+    readAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_read", ["userId", "readAt"]),
 });

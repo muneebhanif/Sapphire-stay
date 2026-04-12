@@ -26,6 +26,7 @@ class _StaffShellState extends ConsumerState<StaffShell> {
     _NavItem(Icons.swap_horiz, 'Check In / Out', RoutePaths.staffCheckinOut),
     _NavItem(Icons.receipt_long_outlined, 'Invoices', RoutePaths.staffInvoices),
     _NavItem(Icons.payment_outlined, 'Payments', RoutePaths.staffPayments),
+    _NavItem(Icons.chat_bubble_outline, 'Messages', RoutePaths.staffMessaging),
   ];
 
   @override

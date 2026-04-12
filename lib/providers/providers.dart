@@ -9,10 +9,12 @@ import '../models/room.dart';
 import '../models/user.dart';
 import '../models/booking_request.dart';
 import '../models/payment_proof.dart';
+import '../models/messaging.dart';
 import '../services/api/api_service.dart';
 import '../core/services/convex_api_service.dart';
 import '../core/services/convex_client_provider.dart';
 import '../core/services/convex_storage_service.dart';
+import '../core/services/convex_messaging_service.dart';
 
 String _cleanBrandingText(String value) {
   var cleaned = value;
@@ -282,3 +284,30 @@ final reviewsProvider = FutureProvider<List<Review>>((ref) async {
 final staffListProvider = allStaffProvider;
 final bookingRequestsProvider = allBookingRequestsProvider;
 final paymentProofsProvider = allPaymentProofsProvider;
+
+/// ─── Messaging & Notifications ─────────────────────────────────
+final messagingServiceProvider = Provider<ConvexMessagingService>((ref) {
+  return ConvexMessagingService(ref.watch(convexClientProvider));
+});
+
+final notificationsProvider =
+    FutureProvider.family<List<AppNotification>, String>((ref, userId) {
+  return ref.watch(messagingServiceProvider).getNotifications(userId);
+});
+
+final unreadNotificationCountProvider =
+    FutureProvider.family<int, String>((ref, userId) {
+  return ref.watch(messagingServiceProvider).getUnreadCount(userId);
+});
+
+final conversationsProvider =
+    FutureProvider.family<List<Conversation>, String>((ref, userId) {
+  return ref.watch(messagingServiceProvider).getConversationsForUser(userId);
+});
+
+final chatMessagesProvider =
+    FutureProvider.family<List<ChatMessage>, String>((ref, bookingRequestId) {
+  return ref
+      .watch(messagingServiceProvider)
+      .getMessagesByBooking(bookingRequestId);
+});

@@ -107,6 +107,19 @@ export const reviewPaymentProof = mutation({
           createdAt: now,
         });
       }
+
+      // Notify the customer about rejection
+      await ctx.db.insert("notifications", {
+        userId: request.customerId,
+        type: "booking_rejected",
+        title: "Booking Update",
+        body: args.rejectionReason
+          ? `Your payment proof was rejected: ${args.rejectionReason}`
+          : "Your payment proof could not be verified. Please submit a new one.",
+        bookingRequestId: request._id,
+        createdAt: now,
+      });
+
       return { status: "rejected" as const };
     }
 
@@ -156,6 +169,16 @@ export const reviewPaymentProof = mutation({
       method: "easypaisa",
       status: "completed",
       recordedBy: args.staffId,
+      createdAt: now,
+    });
+
+    // Notify the customer
+    await ctx.db.insert("notifications", {
+      userId: request.customerId,
+      type: "booking_approved",
+      title: "Booking Confirmed! 🎉",
+      body: "Your booking has been approved and confirmed. We look forward to welcoming you!",
+      bookingRequestId: args.bookingRequestId,
       createdAt: now,
     });
 

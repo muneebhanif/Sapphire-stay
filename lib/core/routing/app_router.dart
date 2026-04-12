@@ -11,6 +11,7 @@ import '../../features/admin/screens/admin_reports_screen.dart';
 import '../../features/admin/screens/admin_room_management_screen.dart';
 import '../../features/admin/screens/admin_staff_management_screen.dart';
 import '../../features/admin/screens/admin_checkin_checkout_screen.dart';
+import '../../features/admin/screens/admin_messaging_screen.dart';
 import '../../features/admin/widgets/admin_shell.dart';
 import '../../features/customer/screens/about_screen.dart';
 import '../../features/customer/screens/booking_confirmation_screen.dart';
@@ -30,6 +31,7 @@ import '../../features/staff/screens/staff_walkin_screen.dart';
 import '../../features/staff/screens/staff_checkin_checkout_screen.dart';
 import '../../features/staff/screens/staff_invoice_screen.dart';
 import '../../features/staff/screens/staff_payment_screen.dart';
+import '../../features/staff/screens/staff_messaging_screen.dart';
 import '../../features/staff/widgets/staff_shell.dart';
 import '../../providers/providers.dart';
 
@@ -59,6 +61,7 @@ abstract final class RoutePaths {
   static const String staffInvoice = '/staff/invoices';
   static const String staffInvoices = staffInvoice; // alias
   static const String staffPayments = '/staff/payments';
+  static const String staffMessaging = '/staff/messaging';
 
   // ── Admin ──
   static const String adminDashboard = '/admin';
@@ -71,6 +74,7 @@ abstract final class RoutePaths {
   static const String adminPayments = '/admin/payments';
   static const String adminReports = '/admin/reports';
   static const String adminStaff = '/admin/staff';
+  static const String adminMessaging = '/admin/messaging';
 }
 
 /// A [Listenable] that notifies whenever the auth state changes.
@@ -294,6 +298,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               child: StaffPaymentScreen(),
             ),
           ),
+          GoRoute(
+            path: RoutePaths.staffMessaging,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: StaffMessagingScreen(),
+            ),
+          ),
         ],
       ),
 
@@ -353,6 +363,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: RoutePaths.adminStaff,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: AdminStaffManagementScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.adminMessaging,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AdminMessagingScreen(),
             ),
           ),
         ],
