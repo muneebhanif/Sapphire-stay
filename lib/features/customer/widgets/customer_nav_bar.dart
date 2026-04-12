@@ -272,7 +272,7 @@ class _UserAvatarMenu extends ConsumerWidget {
           ),
         ),
       ],
-      onSelected: (value) {
+      onSelected: (value) async {
         switch (value) {
           case 'messages':
             showDialog(
@@ -287,8 +287,10 @@ class _UserAvatarMenu extends ConsumerWidget {
             );
             break;
           case 'logout':
-            ref.read(authProvider.notifier).logout();
-            context.go(RoutePaths.home);
+            await ref.read(authProvider.notifier).logout();
+            if (context.mounted) {
+              context.go(RoutePaths.home);
+            }
             break;
         }
       },
