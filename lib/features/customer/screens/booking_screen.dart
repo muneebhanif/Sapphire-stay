@@ -317,30 +317,90 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
         Text('Select Room & Dates', style: AppTypography.titleLarge),
         const SizedBox(height: AppSpacing.lg),
 
-        // ── Room Dropdown ──
+        // ── Room Selection ──
         Text('Select Room', style: AppTypography.labelLarge),
         const SizedBox(height: AppSpacing.xs),
         roomsAsync.when(
           loading: () => const LinearProgressIndicator(color: AppColors.accent),
           error: (e, _) => Text('Error loading rooms: $e'),
-          data: (rooms) => DropdownButtonFormField<String>(
-            value: _selectedRoomId,
-            decoration: const InputDecoration(
-              hintText: 'Choose a room',
-            ),
-            items: rooms
-                .where((r) => r.status.name == 'available')
-                .map(
-                  (r) => DropdownMenuItem(
-                    value: r.id,
-                    child: Text(
-                        '${r.name} — PKR ${r.pricePerNight.toStringAsFixed(0)}/night'),
+          data: (rooms) {
+            final availableRooms =
+                rooms.where((r) => r.status.name == 'available').toList();
+
+            // If room was pre-selected from room detail page, show it as info card
+            if (_selectedRoomId != null) {
+              final selectedRoom = rooms
+                  .where((r) => r.id == _selectedRoomId)
+                  .toList();
+              if (selectedRoom.isNotEmpty) {
+                final room = selectedRoom.first;
+                return Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.06),
+                    borderRadius:
+                        BorderRadius.circular(AppSpacing.radiusMd),
+                    border: Border.all(
+                        color: AppColors.accent.withValues(alpha: 0.3)),
                   ),
-                )
-                .toList(),
-            onChanged: (v) => setState(() => _selectedRoomId = v),
-            validator: (v) => v == null ? 'Please select a room' : null,
-          ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          borderRadius:
+                              BorderRadius.circular(AppSpacing.radiusSm),
+                        ),
+                        child: const Icon(Icons.king_bed,
+                            color: AppColors.white, size: 24),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(room.name,
+                                style: AppTypography.titleSmall),
+                            Text(
+                              'Room ${room.number} · PKR ${room.pricePerNight.toStringAsFixed(0)}/night',
+                              style: AppTypography.bodySmall
+                                  .copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            setState(() => _selectedRoomId = null),
+                        child: const Text('Change'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            }
+
+            // Show dropdown if no room pre-selected
+            return DropdownButtonFormField<String>(
+              value: _selectedRoomId,
+              decoration: const InputDecoration(
+                hintText: 'Choose a room',
+              ),
+              items: availableRooms
+                  .map(
+                    (r) => DropdownMenuItem(
+                      value: r.id,
+                      child: Text(
+                          '${r.name} — PKR ${r.pricePerNight.toStringAsFixed(0)}/night'),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (v) => setState(() => _selectedRoomId = v),
+              validator: (v) => v == null ? 'Please select a room' : null,
+            );
+          },
         ),
         const SizedBox(height: AppSpacing.md),
 
@@ -718,8 +778,14 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
     } catch (e) {
       debugPrint('[BookingScreen] ERROR: $e');
       if (mounted) {
+        final errorMsg = e.toString().contains('upload')
+            ? 'Failed to upload payment screenshot. Please check your internet connection and try again.'
+            : 'Failed to submit booking: ${e.toString().replaceFirst("Exception: ", "")}';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit: $e')),
+          SnackBar(
+            content: Text(errorMsg),
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
       setState(() => _isSubmitting = false);
