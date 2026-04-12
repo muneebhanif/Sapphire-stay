@@ -192,10 +192,22 @@ class _StaffBookingScreenState extends ConsumerState<StaffBookingScreen>
                           b.status != BookingStatus.completed)
                         const PopupMenuItem(value: 'cancel', child: Text('Cancel')),
                     ],
-                    onSelected: (action) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Action "$action" on booking ${b.id.substring(0, 8)}')),
-                      );
+                    onSelected: (action) async {
+                      if (action == 'view') {
+                        _showBookingViewDialog(context, b);
+                      } else if (action == 'confirm') {
+                        await ref.read(bookingServiceProvider).updateBookingStatus(b.id, BookingStatus.confirmed);
+                        _invalidateBookings(ref);
+                      } else if (action == 'checkin') {
+                        await ref.read(bookingServiceProvider).updateBookingStatus(b.id, BookingStatus.checkedIn);
+                        _invalidateBookings(ref);
+                      } else if (action == 'checkout') {
+                        await ref.read(bookingServiceProvider).updateBookingStatus(b.id, BookingStatus.completed);
+                        _invalidateBookings(ref);
+                      } else if (action == 'cancel') {
+                        await ref.read(bookingServiceProvider).updateBookingStatus(b.id, BookingStatus.cancelled);
+                        _invalidateBookings(ref);
+                      }
                     },
                   ),
                 ),
@@ -209,4 +221,40 @@ class _StaffBookingScreenState extends ConsumerState<StaffBookingScreen>
 
   String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  void _showBookingViewDialog(BuildContext context, Booking b) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Booking ${b.id.substring(0, 8)}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Guest: ${b.guestName}'),
+              Text('Room ID: ${b.roomId}'),
+              Text('Status: ${b.status.name.toUpperCase()}'),
+              Text('Check-in: ${_fmtDate(b.checkIn)}'),
+              Text('Check-out: ${_fmtDate(b.checkOut)}'),
+              Text('Nights: ${b.nights}'),
+              Text('Guests: ${b.guests}'),
+              const SizedBox(height: 10),
+              Text('Total Amount: PKR ${b.totalAmount.round()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
+
+  void _invalidateBookings(WidgetRef ref) {
+    ref.invalidate(todayCheckInsProvider);
+    ref.invalidate(todayCheckOutsProvider);
+    ref.invalidate(allBookingsProvider);
+  }
 }
+

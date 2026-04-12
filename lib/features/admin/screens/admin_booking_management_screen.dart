@@ -176,29 +176,24 @@ class _AdminBookingManagementScreenState
                               DataCell(
                                 PopupMenuButton<String>(
                                   icon: const Icon(Icons.more_vert, size: 18),
-                                  itemBuilder: (_) => [
-                                    const PopupMenuItem(
-                                        value: 'view',
-                                        child: Text('View Details')),
-                                    const PopupMenuItem(
-                                        value: 'edit', child: Text('Edit')),
-                                    if (b.status != BookingStatus.cancelled &&
-                                        b.status != BookingStatus.completed)
+                                    itemBuilder: (_) => [
                                       const PopupMenuItem(
-                                          value: 'cancel',
-                                          child: Text('Cancel')),
-                                    const PopupMenuItem(
-                                        value: 'delete',
-                                        child: Text('Delete')),
-                                  ],
-                                  onSelected: (action) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            '$action booking ${b.id.substring(0, 8)}'),
-                                      ),
-                                    );
-                                  },
+                                          value: 'view',
+                                          child: Text('View Details')),
+                                      if (b.status != BookingStatus.cancelled &&
+                                          b.status != BookingStatus.completed)
+                                        const PopupMenuItem(
+                                            value: 'cancel',
+                                            child: Text('Cancel')),
+                                    ],
+                                    onSelected: (action) async {
+                                      if (action == 'view') {
+                                        _showBookingViewDialog(context, b);
+                                      } else if (action == 'cancel') {
+                                        await ref.read(bookingServiceProvider).updateBookingStatus(b.id, BookingStatus.cancelled);
+                                        ref.invalidate(allBookingsProvider);
+                                      }
+                                    },
                                 ),
                               ),
                             ]);
@@ -218,4 +213,33 @@ class _AdminBookingManagementScreenState
 
   String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  void _showBookingViewDialog(BuildContext context, Booking b) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Booking ${b.id.substring(0, 8)}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Guest: ${b.guestName}'),
+              Text('Room ID: ${b.roomId}'),
+              Text('Status: ${b.status.name.toUpperCase()}'),
+              Text('Check-in: ${_fmtDate(b.checkIn)}'),
+              Text('Check-out: ${_fmtDate(b.checkOut)}'),
+              Text('Nights: ${b.nights}'),
+              Text('Guests: ${b.guests}'),
+              const SizedBox(height: 10),
+              Text('Total Amount: PKR ${b.totalAmount.round()}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
 }

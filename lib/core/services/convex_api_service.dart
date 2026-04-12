@@ -398,8 +398,11 @@ class ConvexBookingService implements BookingService {
   @override
   Future<Booking> updateBookingStatus(
       String id, BookingStatus status) async {
-    final all = await getAllBookings();
-    return all.firstWhere((b) => b.id == id);
+    await _client.mutation('data:updateBookingStatus', {
+      'id': id,
+      'status': status.name,
+    });
+    return getBookingById(id);
   }
 
   @override
@@ -505,8 +508,11 @@ class ConvexInvoiceService implements InvoiceService {
   @override
   Future<Invoice> updateInvoiceStatus(
       String id, InvoiceStatus status) async {
-    final all = await getAllInvoices();
-    return all.firstWhere((i) => i.id == id);
+    await _client.mutation('data:updateInvoiceStatus', {
+      'id': id,
+      'status': status.name,
+    });
+    return getInvoiceById(id);
   }
 
   @override

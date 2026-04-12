@@ -120,25 +120,18 @@ class StaffInvoiceScreen extends ConsumerWidget {
                             PopupMenuButton<String>(
                               icon: const Icon(Icons.more_vert, size: 18),
                               itemBuilder: (_) => const [
-                                PopupMenuItem(
-                                    value: 'view', child: Text('View')),
-                                PopupMenuItem(
-                                    value: 'print', child: Text('Print')),
-                                PopupMenuItem(
-                                    value: 'markPaid',
-                                    child: Text('Mark as Paid')),
+                                PopupMenuItem(value: 'view', child: Text('View')),
+                                PopupMenuItem(value: 'print', child: Text('Print')),
+                                PopupMenuItem(value: 'markPaid', child: Text('Mark as Paid')),
                               ],
                               onSelected: (action) async {
                                 if (action == 'print') {
                                   await _printInvoice(inv, context);
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Action "$action" on invoice ${inv.id.substring(0, 8)}',
-                                      ),
-                                    ),
-                                  );
+                                } else if (action == 'view') {
+                                  _showInvoiceViewDialog(context, inv);
+                                } else if (action == 'markPaid') {
+                                  await ref.read(invoiceServiceProvider).updateInvoiceStatus(inv.id, InvoiceStatus.paid);
+                                  ref.invalidate(invoicesProvider);
                                 }
                               },
                             ),
@@ -158,6 +151,32 @@ class StaffInvoiceScreen extends ConsumerWidget {
 
   String _fmtDate(DateTime d) =>
       '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+  void _showInvoiceViewDialog(BuildContext context, Invoice inv) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Invoice ${inv.id.substring(0, 8)}'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Guest: ${inv.guestName}'),
+              Text('Status: ${inv.status.name.toUpperCase()}'),
+              Text('Total: PKR ${inv.total}'),
+              const SizedBox(height: 10),
+              const Text('Items:', style: TextStyle(fontWeight: FontWeight.bold)),
+              ...inv.lineItems.map((item) => Text('- ${item.description} x${item.quantity} (PKR ${item.total})'))
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
 
   Future<void> _printInvoice(Invoice inv, BuildContext context) async {
     try {

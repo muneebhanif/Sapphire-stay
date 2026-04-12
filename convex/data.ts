@@ -292,6 +292,20 @@ export const createWalkInBooking = mutation({
   }
 });
 
+export const updateBookingStatus = mutation({
+  args: { id: v.id("bookings"), status: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: args.status as any });
+  }
+});
+
+export const updateInvoiceStatus = mutation({
+  args: { id: v.id("invoices"), status: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { status: args.status as any });
+  }
+});
+
 // ───────────────────────────────────────────────────────────
 // GUEST QUERIES + MUTATIONS
 // ───────────────────────────────────────────────────────────
