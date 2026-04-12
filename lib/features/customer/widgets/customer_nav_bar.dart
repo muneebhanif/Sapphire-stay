@@ -62,7 +62,20 @@ class CustomerNavBar extends ConsumerWidget {
               const SizedBox(width: AppSpacing.xs),
               _MessagesBadge(userId: user.id),
               const SizedBox(width: AppSpacing.sm),
-              _UserAvatarMenu(user: user),
+              TextButton.icon(
+                icon: const Icon(Icons.logout, size: 18),
+                label: const Text('Logout'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                onPressed: () async {
+                  await ref.read(authProvider.notifier).logout();
+                  if (context.mounted) {
+                    context.go(RoutePaths.home);
+                  }
+                },
+              ),
             ] else
               TextButton(
                 onPressed: () => context.go(RoutePaths.login),
@@ -156,140 +169,7 @@ class CustomerNavBar extends ConsumerWidget {
   }
 }
 
-// ─── User Avatar Menu (Desktop) ────────────────────────────────────
 
-class _UserAvatarMenu extends ConsumerWidget {
-  final dynamic user;
-  const _UserAvatarMenu({required this.user});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final initials = _getInitials(user.name);
-
-    return MenuAnchor(
-      builder: (BuildContext context, MenuController controller, Widget? child) {
-        return InkWell(
-          onTap: () {
-            if (controller.isOpen) {
-              controller.close();
-            } else {
-              controller.open();
-            }
-          },
-          borderRadius: BorderRadius.circular(100),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(100),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  user.name.split(' ').first,
-                  style: AppTypography.labelMedium.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 2),
-                Icon(Icons.keyboard_arrow_down,
-                    size: 18, color: AppColors.primary.withValues(alpha: 0.6)),
-              ],
-            ),
-          ),
-        );
-      },
-      menuChildren: [
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(user.name, style: AppTypography.titleSmall),
-              Text(user.email,
-                  style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.textTertiary)),
-              const SizedBox(height: AppSpacing.xs),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  user.role.name.toUpperCase(),
-                  style: AppTypography.labelSmall.copyWith(
-                    color: AppColors.accent,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Divider(),
-        MenuItemButton(
-          leadingIcon: const Icon(Icons.chat_bubble_outline,
-              size: 18, color: AppColors.textSecondary),
-          child: const Text('Messages'),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (_) => _ConversationsDialog(userId: user.id),
-            );
-          },
-        ),
-        MenuItemButton(
-          leadingIcon: const Icon(Icons.notifications_outlined,
-              size: 18, color: AppColors.textSecondary),
-          child: const Text('Notifications'),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (_) => _NotificationsDialog(userId: user.id),
-            );
-          },
-        ),
-        const Divider(),
-        MenuItemButton(
-          leadingIcon: const Icon(Icons.logout, size: 18, color: AppColors.error),
-          child: const Text('Logout', style: TextStyle(color: AppColors.error)),
-          onPressed: () async {
-            await ref.read(authProvider.notifier).logout();
-            if (context.mounted) {
-              context.go(RoutePaths.home);
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  String _getInitials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-    }
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
-}
 
 // ─── Notification Bell ─────────────────────────────────────────────
 
