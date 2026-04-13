@@ -573,7 +573,7 @@ class _BookingScreenState extends ConsumerState<BookingScreen> {
                     _buildReviewRow(
                       'Account Number',
                       PaymentEnv.easypaisaAccountNumber.isEmpty
-                          ? 'Configure FLUTTER_EASYPAISA_ACCOUNT_NUMBER'
+                          ? '03188188807'
                           : PaymentEnv.easypaisaAccountNumber,
                     ),
                     _buildReviewRow('Amount to Send', CurrencyUtils.formatPkr(totalPkr)),

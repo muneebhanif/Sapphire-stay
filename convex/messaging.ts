@@ -39,13 +39,6 @@ export const sendMessage = mutation({
 export const editMessage = mutation({
   args: { messageId: v.id("staffMessages"), newText: v.string() },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.messageId, { text: args.text }); // wait, I meant text: args.newText
-  }
-});
-// let me fix that argument instantly
-export const editMessage = mutation({
-  args: { messageId: v.id("staffMessages"), newText: v.string() },
-  handler: async (ctx, args) => {
     await ctx.db.patch(args.messageId, { text: args.newText });
   }
 });
