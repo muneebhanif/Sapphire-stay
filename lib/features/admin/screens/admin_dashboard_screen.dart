@@ -73,7 +73,7 @@ class AdminDashboardScreen extends ConsumerWidget {
                   return SSStatCard(
                     title: 'Revenue',
                     value: CurrencyUtils.formatPkr(total.round()),
-                    icon: Icons.attach_money,
+                    icon: Icons.account_balance_wallet_outlined,
                     color: AppColors.warning,
                   );
                 },

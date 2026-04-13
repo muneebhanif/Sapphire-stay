@@ -217,12 +217,12 @@ class RoomDetailScreen extends ConsumerWidget {
 
           // ── CTA ──
           SSButton(
-            label: 'Book This Room',
+            label: room.status.name == 'available' ? 'Book This Room' : 'Currently Unavailable',
             isExpanded: true,
             size: SSButtonSize.large,
-            onPressed: () => context.go(
+            onPressed: room.status.name == 'available' ? () => context.go(
               '${RoutePaths.booking}?roomId=${Uri.encodeComponent(room.id)}',
-            ),
+            ) : null,
           ),
           const SizedBox(height: AppSpacing.xs),
           SSButton(

@@ -12,6 +12,7 @@ import '../../features/admin/screens/admin_room_management_screen.dart';
 import '../../features/admin/screens/admin_staff_management_screen.dart';
 import '../../features/admin/screens/admin_checkin_checkout_screen.dart';
 import '../../features/admin/screens/admin_messaging_screen.dart';
+import '../../features/admin/screens/admin_subscribers_screen.dart';
 import '../../features/admin/widgets/admin_shell.dart';
 import '../../features/customer/screens/about_screen.dart';
 import '../../features/customer/screens/booking_confirmation_screen.dart';
@@ -75,6 +76,7 @@ abstract final class RoutePaths {
   static const String adminReports = '/admin/reports';
   static const String adminStaff = '/admin/staff';
   static const String adminMessaging = '/admin/messaging';
+  static const String adminSubscribers = '/admin/subscribers';
 }
 
 /// A [Listenable] that notifies whenever the auth state changes.
@@ -377,6 +379,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: RoutePaths.adminMessaging,
             pageBuilder: (context, state) => const NoTransitionPage(
               child: AdminMessagingScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.adminSubscribers,
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: AdminSubscribersScreen(),
             ),
           ),
         ],

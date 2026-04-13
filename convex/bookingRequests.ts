@@ -22,6 +22,12 @@ export const createBookingRequest = mutation({
     }
 
     const now = Date.now();
+
+    if (args.roomId) {
+      // Mark it as occupied/reserved like adding to cart
+      await ctx.db.patch(args.roomId, { status: "occupied" });
+    }
+
     return await ctx.db.insert("bookingRequests", {
       ...args,
       status: "pending_payment",

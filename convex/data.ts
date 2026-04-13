@@ -617,7 +617,10 @@ export const getGalleryImages = query({
         ),
         caption: img.caption,
       })),
-      ...roomImageUrls.map((url) => ({ url, caption: "" })),
+      ...roomImageUrls.map((url, index) => ({ 
+        url: normalizeMediaUrl(url, localRoomImages[Object.keys(localRoomImages)[index % 4]] || "assets/imgs/room.jpeg"), 
+        caption: "" 
+      })),
     ];
 
     const seen = new Set<string>();
@@ -673,5 +676,31 @@ export const getUserByEmail = query({
       created_at: asIso(user.createdAt),
       is_active: user.isActive,
     };
+  },
+});
+
+// ───────────────────────────────────────────────────────────
+// SUBSCRIBERS
+// ───────────────────────────────────────────────────────────
+
+export const subscribeNewsletter = mutation({
+  args: { email: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("subscribers")
+      .withIndex("by_email", (q) => q.eq("email", args.email))
+      .first();
+    if (existing) return;
+    await ctx.db.insert("subscribers", {
+      email: args.email,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const getSubscribers = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("subscribers").order("desc").collect();
   },
 });

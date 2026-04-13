@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
 import 'customer_nav_bar.dart';
 import 'footer.dart';
 
@@ -17,6 +19,9 @@ class CustomerShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Force recreation of ScrollView on route change to reset scroll position
+    final routeUri = GoRouterState.of(context).uri.toString();
+    
     return Scaffold(
       endDrawer: const CustomerDrawer(),
       body: Column(
@@ -27,6 +32,7 @@ class CustomerShell extends StatelessWidget {
           // ── Scrollable Content + Footer ──
           Expanded(
             child: SingleChildScrollView(
+              key: ValueKey(routeUri),
               child: Column(
                 children: [
                   child,
@@ -40,3 +46,4 @@ class CustomerShell extends StatelessWidget {
     );
   }
 }
+

@@ -28,6 +28,12 @@ class RoomCard extends StatelessWidget {
             backgroundColor: AppColors.primary,
             textColor: AppColors.accent,
           ),
+        if (room.status != RoomStatus.available)
+          SSBadge(
+            label: room.status.name.toUpperCase(),
+            backgroundColor: Colors.redAccent,
+            textColor: Colors.white,
+          ),
       ],
       onTap: () => context.go('/rooms/${room.id}'),
       body: Column(

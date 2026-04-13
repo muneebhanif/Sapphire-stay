@@ -191,7 +191,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       hint: '5000',
                       controller: priceCtrl,
                       keyboardType: TextInputType.number,
-                      prefixIcon: Icons.attach_money,
+                      prefixIcon: Icons.account_balance_wallet_outlined,
                       validator: (v) =>
                           v?.isEmpty ?? true ? 'Required' : null,
                     ),
@@ -494,7 +494,7 @@ class AdminRoomManagementScreen extends ConsumerWidget {
                       hint: '5000',
                       controller: priceCtrl,
                       keyboardType: TextInputType.number,
-                      prefixIcon: Icons.attach_money,
+                      prefixIcon: Icons.account_balance_wallet_outlined,
                       validator: (v) => v?.isEmpty ?? true ? 'Required' : null,
                     ),
                     const SizedBox(height: AppSpacing.md),

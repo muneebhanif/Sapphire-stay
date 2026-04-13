@@ -117,7 +117,13 @@ class _RoomsScreenState extends ConsumerState<RoomsScreen> {
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 700),
-            child: const AvailabilityPicker(),
+            child: AvailabilityPicker(
+              onSearch: (range) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Showing available rooms for selected dates.')),
+                );
+              },
+            ),
           ),
         ),
 

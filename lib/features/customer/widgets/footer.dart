@@ -68,7 +68,7 @@ class CustomerFooter extends ConsumerWidget {
         const SizedBox(width: AppSpacing.xxl),
 
         // ── Newsletter ──
-        Expanded(flex: 2, child: _buildNewsletterSection()),
+        Expanded(flex: 2, child: const _NewsletterSection()),
       ],
     );
   }
@@ -83,7 +83,7 @@ class CustomerFooter extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         _buildContactSection(ref),
         const SizedBox(height: AppSpacing.xl),
-        _buildNewsletterSection(),
+        const _NewsletterSection(),
       ],
     );
   }
@@ -197,8 +197,52 @@ class CustomerFooter extends ConsumerWidget {
       ],
     );
   }
+}
 
-  Widget _buildNewsletterSection() {
+class _NewsletterSection extends ConsumerStatefulWidget {
+  const _NewsletterSection();
+
+  @override
+  ConsumerState<_NewsletterSection> createState() => _NewsletterSectionState();
+}
+
+class _NewsletterSectionState extends ConsumerState<_NewsletterSection> {
+  final _emailController = TextEditingController();
+  bool _isLoading = false;
+  String? _message;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _subscribe() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty || !email.contains('@')) {
+      setState(() => _message = 'Please enter a valid email');
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+      _message = null;
+    });
+    try {
+      final client = ref.read(convexClientProvider);
+      await client.mutation("data:subscribeNewsletter", {"email": email});
+      setState(() {
+        _message = 'Subscribed successfully!';
+        _emailController.clear();
+      });
+    } catch (e) {
+      setState(() => _message = 'Failed to subscribe');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget _buildNewsletterSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -218,6 +262,7 @@ class CustomerFooter extends ConsumerWidget {
           children: [
             Expanded(
               child: TextField(
+                controller: _emailController,
                 decoration: InputDecoration(
                   hintText: 'Your email address',
                   filled: true,
@@ -241,12 +286,28 @@ class CustomerFooter extends ConsumerWidget {
             ),
             const SizedBox(width: AppSpacing.xs),
             ElevatedButton(
-              onPressed: () {},
-              child: const Text('Subscribe'),
+              onPressed: _isLoading ? null : _subscribe,
+              child: _isLoading 
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) 
+                : const Text('Subscribe'),
             ),
           ],
         ),
+        if (_message != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            _message!,
+            style: AppTypography.bodySmall.copyWith(
+              color: _message!.contains('success') ? Colors.green : Colors.redAccent,
+            ),
+          ),
+        ],
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildNewsletterSection(context);
   }
 }

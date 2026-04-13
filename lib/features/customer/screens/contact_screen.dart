@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: avoid_web_libraries_in_flutter
+import 'dart:js' as js;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -103,29 +105,56 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
           ),
         ),
 
-        // ── Map Placeholder ──
-        Container(
-          height: 400,
-          width: double.infinity,
-          color: AppColors.surfaceVariant,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.map_outlined, size: 64, color: AppColors.textTertiary),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Map Placeholder',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: AppColors.textTertiary,
-                  ),
+        // ── Map Location ──
+        InkWell(
+          onTap: () {
+            try {
+              js.context.callMethod('open', ['https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad']);
+            } catch (e) {
+              // Ignore
+            }
+          },
+          child: Container(
+            height: 400,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceVariant,
+              image: const DecorationImage(
+                image: NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=Muzaffarabad&zoom=14&size=800x400&markers=color:red%7CSapphire+Stay+Muzaffarabad&key=YOUR_API_KEY'),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  color: AppColors.white.withValues(alpha: 0.9),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                 ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  'Google Maps or similar integration will be added here',
-                  style: AppTypography.bodySmall,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.location_on, size: 48, color: AppColors.accent),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Sapphire Stay, Muzaffarabad',
+                      style: AppTypography.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.map),
+                      label: const Text('View on Google Maps'),
+                      onPressed: () {
+                        try {
+                          js.context.callMethod('open', ['https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad']);
+                        } catch (e) {
+                          // Ignore if not web
+                        }
+                      },
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

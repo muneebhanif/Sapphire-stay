@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -67,9 +68,11 @@ class _AvailabilityPickerState extends State<AvailabilityPicker> {
 
   void _handleSearch() {
     if (_checkIn != null && _checkOut != null) {
-      widget.onSearch?.call(
-        DateTimeRange(start: _checkIn!, end: _checkOut!),
-      );
+      if (widget.onSearch != null) {
+        widget.onSearch!(DateTimeRange(start: _checkIn!, end: _checkOut!));
+      } else {
+        context.go('/rooms'); // or use RoutePaths.rooms
+      }
     }
   }
 
