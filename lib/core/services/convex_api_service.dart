@@ -474,10 +474,20 @@ class ConvexGuestService implements GuestService {
   }
 
   @override
-  Future<Guest> updateGuest(Guest guest) async => guest;
+  Future<Guest> updateGuest(Guest guest) async {
+    await _client.mutation('data:updateGuest', {
+      'id': guest.id,
+      'name': guest.name,
+      'email': guest.email,
+      'phone': guest.phone,
+    });
+    return guest;
+  }
 
   @override
-  Future<void> deleteGuest(String id) async {}
+  Future<void> deleteGuest(String id) async {
+    await _client.mutation('data:deleteGuest', {'id': id});
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

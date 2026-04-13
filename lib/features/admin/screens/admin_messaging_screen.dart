@@ -299,6 +299,20 @@ class _AdminChatView extends ConsumerWidget {
                             ],
                           ),
                         ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert, size: 16, color: AppColors.textTertiary),
+                          itemBuilder: (_) => const [
+                            PopupMenuItem(value: 'edit', child: Text('Edit')),
+                            PopupMenuItem(value: 'delete', child: Text('Delete')),
+                          ],
+                          onSelected: (action) {
+                            if (action == 'edit') {
+                              _showEditMessageDialog(context, ref, m);
+                            } else if (action == 'delete') {
+                              _showDeleteMessageDialog(context, ref, m);
+                            }
+                          },
+                        ),
                       ],
                     ),
                   );
@@ -308,6 +322,56 @@ class _AdminChatView extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+
+  void _showEditMessageDialog(BuildContext context, WidgetRef ref, ChatMessage msg) {
+    final textCtrl = TextEditingController(text: msg.text);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Message'),
+        content: TextField(
+          controller: textCtrl,
+          decoration: const InputDecoration(labelText: 'Message Text'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (textCtrl.text.isNotEmpty) {
+                await ref.read(messagingServiceProvider).editMessage(msg.id, textCtrl.text);
+                ref.invalidate(chatMessagesProvider(bookingRequestId));
+                if (ctx.mounted) Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteMessageDialog(BuildContext context, WidgetRef ref, ChatMessage msg) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Message'),
+        content: const Text('Are you sure you want to delete this message? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () async {
+              await ref.read(messagingServiceProvider).deleteMessage(msg.id);
+              ref.invalidate(chatMessagesProvider(bookingRequestId));
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
     );
   }
 }

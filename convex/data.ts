@@ -351,6 +351,29 @@ export const createGuest = mutation({
   },
 });
 
+export const updateGuest = mutation({
+  args: {
+    id: v.id("users"),
+    name: v.string(),
+    email: v.string(),
+    phone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      name: args.name,
+      email: args.email,
+      phone: args.phone,
+    });
+  }
+});
+
+export const deleteGuest = mutation({
+  args: { id: v.id("users") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id);
+  }
+});
+
 // ───────────────────────────────────────────────────────────
 // INVOICE QUERIES
 // ───────────────────────────────────────────────────────────

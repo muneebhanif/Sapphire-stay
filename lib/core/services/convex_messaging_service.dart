@@ -23,6 +23,19 @@ class ConvexMessagingService {
     });
   }
 
+  Future<void> editMessage(String messageId, String newText) async {
+    await _client.mutation('messaging:editMessage', {
+      'messageId': messageId,
+      'newText': newText,
+    });
+  }
+
+  Future<void> deleteMessage(String messageId) async {
+    await _client.mutation('messaging:deleteMessage', {
+      'messageId': messageId,
+    });
+  }
+
   Future<List<ChatMessage>> getMessagesByBooking(
       String bookingRequestId) async {
     final results = await _client.query('messaging:getMessagesByBooking', {

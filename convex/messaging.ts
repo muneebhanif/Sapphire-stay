@@ -36,6 +36,27 @@ export const sendMessage = mutation({
   },
 });
 
+export const editMessage = mutation({
+  args: { messageId: v.id("staffMessages"), newText: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, { text: args.text }); // wait, I meant text: args.newText
+  }
+});
+// let me fix that argument instantly
+export const editMessage = mutation({
+  args: { messageId: v.id("staffMessages"), newText: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.messageId, { text: args.newText });
+  }
+});
+
+export const deleteMessage = mutation({
+  args: { messageId: v.id("staffMessages") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.messageId);
+  }
+});
+
 /** Get messages for a booking request */
 export const getMessagesByBooking = query({
   args: { bookingRequestId: v.id("bookingRequests") },

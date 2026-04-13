@@ -131,13 +131,19 @@ class AdminGuestManagementScreen extends ConsumerWidget {
                                 PopupMenuItem(
                                     value: 'delete', child: Text('Delete')),
                               ],
-                              onSelected: (action) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content:
-                                        Text('$action guest ${g.name}'),
-                                  ),
-                                );
+                              onSelected: (action) async {
+                                if (action == 'view') {
+                                  _showGuestViewDialog(context, g);
+                                } else if (action == 'edit') {
+                                  _showEditGuestDialog(context, ref, g);
+                                } else if (action == 'delete') {
+                                  await ref.read(guestServiceProvider).deleteGuest(g.id);
+                                  ref.invalidate(guestsProvider);
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Action $action not fully implemented yet')),
+                                  );
+                                }
                               },
                             ),
                           ),
@@ -151,6 +157,75 @@ class AdminGuestManagementScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showGuestViewDialog(BuildContext context, Guest guest) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Guest Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Name: ${guest.name}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Email: ${guest.email}'),
+            Text('Phone: ${guest.phone}'),
+            Text('Nationality: ${guest.nationality ?? "Unknown"}'),
+            Text('Total Stays: ${guest.totalStays}'),
+            Text('Registered: ${guest.createdAt.toString().split(" ")[0]}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))
+        ],
+      ),
+    );
+  }
+
+  void _showEditGuestDialog(BuildContext context, WidgetRef ref, Guest guest) {
+    final nameCtrl = TextEditingController(text: guest.name);
+    final emailCtrl = TextEditingController(text: guest.email);
+    final phoneCtrl = TextEditingController(text: guest.phone);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Guest'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
+            const SizedBox(height: 10),
+            TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Email')),
+            const SizedBox(height: 10),
+            TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Phone')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final updated = Guest(
+                id: guest.id,
+                name: nameCtrl.text,
+                email: emailCtrl.text,
+                phone: phoneCtrl.text,
+                idNumber: guest.idNumber,
+                nationality: guest.nationality,
+                address: guest.address,
+                totalStays: guest.totalStays,
+                createdAt: guest.createdAt,
+              );
+              await ref.read(guestServiceProvider).updateGuest(updated);
+              ref.invalidate(guestsProvider);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
     );
   }
 }
