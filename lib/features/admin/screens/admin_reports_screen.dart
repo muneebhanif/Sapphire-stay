@@ -263,9 +263,7 @@ class AdminReportsScreen extends ConsumerWidget {
                   }
                   
                   for (var p in payments) {
-                    final pDate = DateTime.fromMillisecondsSinceEpoch(p.createdAt ?? 0); // Need to get date if it has one
-                    // actually Payment model doesn't have createdAt here since it's just 'payments' which we map?
-                    // wait, we mock it or actually payments don't have date easily accessible here because they are just generic models, let's check Payment provider.
+                    final pDate = p.paidAt;
                     // Instead just make a nice looking bar chart with what we have.
                     // If we can't do time series easily, we just use random bars for visual demo.
                   }

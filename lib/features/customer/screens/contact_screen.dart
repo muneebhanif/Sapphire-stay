@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:js' as js;
+import 'dart:html' as html;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_colors.dart';
@@ -109,7 +108,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
         InkWell(
           onTap: () {
             try {
-              js.context.callMethod('open', ['https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad']);
+              html.window.open('https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad', '_blank');
             } catch (e) {
               // Ignore
             }
@@ -146,7 +145,7 @@ class _ContactScreenState extends ConsumerState<ContactScreen> {
                       label: const Text('View on Google Maps'),
                       onPressed: () {
                         try {
-                          js.context.callMethod('open', ['https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad']);
+                          html.window.open('https://www.google.com/maps/search/?api=1&query=Sapphire+Stay+Muzaffarabad', '_blank');
                         } catch (e) {
                           // Ignore if not web
                         }
